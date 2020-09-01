@@ -1,0 +1,18 @@
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: vault
+  namespace: vault
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`secure.spamasaurus.com`)
+      kind: Rule
+      services:
+        - name: vault
+          namespace: vault
+          port: 8200
+      middlewares:
+#        - name: ldap-authentication@file
+        - name: security-headers@file

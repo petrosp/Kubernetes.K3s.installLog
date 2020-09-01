@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: configmap-guacamole-mysql-conf
+data:
+  MYSQL_DATABASE: 'guacamole'
+  MYSQL_PASSWORD: 'guacamole'
+  MYSQL_USER: 'guacamole'

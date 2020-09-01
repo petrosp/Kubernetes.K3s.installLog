@@ -1,0 +1,175 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: guacamole
+spec:
+  ports:
+    - protocol: TCP
+      name: ui
+      port: 8080
+    - protocol: TCP
+      name: proxy
+      port: 4822
+    - protocol: TCP
+      name: db
+      port: 3306
+  selector:
+    app: guacamole
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: guacamole
+  labels:
+    app: guacamole
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: guacamole
+  template:
+    metadata:
+      labels:
+        app: guacamole
+    spec:
+      hostname: guacamole
+      containers:
+      - name: guacamole
+        image: guacamole/guacamole
+        env:
+        - name: GUACD_HOSTNAME
+          value: 'guacamole.default.svc.cluster.local'
+        - name: MYSQL_HOSTNAME
+          value: 'guacamole.default.svc.cluster.local'
+        - name: GUACAMOLE_HOME
+          value: '/etc/guacamole'
+        envFrom:
+        - configMapRef:
+            name: configmap-guacamole-mysql-conf
+        volumeMounts:
+        - name: flexvolsmb-guacamole-home
+          mountPath: /etc/guacamole
+        ports:
+          - name: ui
+            containerPort: 8080
+      - name: guacd
+        image: guacamole/guacd
+        env:
+        - name: GUACD_LOG_LEVEL
+          value: 'debug'
+        ports:
+          - name: proxy
+            containerPort: 4822
+      - name: mysql
+        image: mysql:latest
+        securityContext:
+          runAsUser: 999
+          runAsGroup: 999
+        env:
+        - name: MYSQL_RANDOM_ROOT_PASSWORD
+          value: 'true'
+        envFrom:
+        - configMapRef:
+            name: configmap-guacamole-mysql-conf
+        volumeMounts:
+        - name: flexvolsmb-guacamole-db
+          mountPath: /var/lib/mysql
+        ports:
+          - name: db
+            containerPort: 3306
+      volumes:
+      - name: flexvolsmb-guacamole-db
+        persistentVolumeClaim:
+          claimName: flexvolsmb-guacamole-db
+      - name: flexvolsmb-guacamole-home
+        persistentVolumeClaim:
+          claimName: flexvolsmb-guacamole-home
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: prepend-path-guacamole
+spec:
+  addPrefix:
+    prefix: /guacamole
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: guacamole
+spec:
+  entryPoints:
+    - websecure
+  routes:
+  - match: Host(`remote.spamasaurus.com`)
+    kind: Rule
+    services:
+    - name: guacamole
+      port: 8080
+    middlewares:
+      - name: prepend-path-guacamole
+      - name: security-headers@file
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: flexvolsmb-guacamole-db
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteMany
+  storageClassName: flexvolsmb-guacamole-db
+  flexVolume:
+    driver: mount/smb
+    secretRef:
+      name: smb-secret
+    options:
+      opts: domain=bessems.eu,file_mode=0755,dir_mode=0755,uid=999,gid=999,iocharset=utf8
+      server: 192.168.11.225
+      share: /K3s.Volumes/guacamole/db
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: flexvolsmb-guacamole-db
+  namespace: default
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: flexvolsmb-guacamole-db
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: flexvolsmb-guacamole-home
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteMany
+  storageClassName: flexvolsmb-guacamole-home
+  flexVolume:
+    driver: mount/smb
+    secretRef:
+      name: smb-secret
+    options:
+      opts: domain=bessems.eu,file_mode=0755,dir_mode=0755,uid=999,gid=999,iocharset=utf8
+      server: 192.168.11.225
+      share: /K3s.Volumes/guacamole/home
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: flexvolsmb-guacamole-home
+  namespace: default
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: flexvolsmb-guacamole-home
+  resources:
+    requests:
+      storage: 1Gi

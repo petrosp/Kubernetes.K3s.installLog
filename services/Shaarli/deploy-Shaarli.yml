@@ -1,0 +1,134 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: shaarli
+spec:
+  ports:
+    - protocol: TCP
+      name: web
+      port: 80
+  selector:
+    app: shaarli
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: shaarli
+  labels:
+    app: shaarli
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: shaarli
+  template:
+    metadata:
+      labels:
+        app: shaarli
+    spec:
+      containers:
+      - name: shaarli
+        image: shaarli/shaarli
+        ports:
+          - name: web
+            containerPort: 80
+        volumeMounts:
+        - mountPath: /var/www/shaarli/cache
+          name: flexvolsmb-shaarli-cache
+        - mountPath: /var/www/shaarli/data
+          name: flexvolsmb-shaarli-data
+      volumes:
+      - name: flexvolsmb-shaarli-cache
+        persistentVolumeClaim:
+          claimName: flexvolsmb-shaarli-cache
+      - name: flexvolsmb-shaarli-data
+        persistentVolumeClaim:
+          claimName: flexvolsmb-shaarli-data
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: shaarli
+spec:
+  entryPoints:
+    - websecure
+  routes:
+  - match: Host(`p.itch.fyi`)
+    kind: Rule
+    services:
+    - name: shaarli
+      port: 80
+    middlewares:
+    - name: security-headers@file
+#  tls:
+#    options:
+#      name: defaults@file
+#    certResolver: default
+#    domains:
+#    - main: '*.itch.fyi'
+#      sans:
+#        - 'itch.fyi'
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: flexvolsmb-shaarli-cache
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteMany
+  storageClassName: flexvolsmb-shaarli-cache
+  flexVolume:
+    driver: mount/smb
+    secretRef:
+      name: smb-secret
+    options:
+      opts: domain=bessems.eu,file_mode=0777,dir_mode=0777,iocharset=utf8
+      server: 192.168.11.225
+      share: /K3s.Volumes/shaarli/cache
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: flexvolsmb-shaarli-data
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteMany
+  storageClassName: flexvolsmb-shaarli-data
+  flexVolume:
+    driver: mount/smb
+    secretRef:
+      name: smb-secret
+    options:
+      opts: domain=bessems.eu,file_mode=0777,dir_mode=0777,iocharset=utf8
+      server: 192.168.11.225
+      share: /K3s.Volumes/shaarli/data
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: flexvolsmb-shaarli-cache
+  namespace: default
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: flexvolsmb-shaarli-cache
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: flexvolsmb-shaarli-data
+  namespace: default
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: flexvolsmb-shaarli-data
+  resources:
+    requests:
+      storage: 1Gi

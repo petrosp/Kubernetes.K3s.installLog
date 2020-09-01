@@ -1,0 +1,110 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: nzbhydra
+  namespace: pvr
+spec:
+  type: NodePort
+  ports:
+    - protocol: TCP
+      name: web
+      port: 5076
+      nodePort: 30010
+  selector:
+    app: nzbhydra
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nzbhydra
+  namespace: pvr
+  labels:
+    app: nzbhydra
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nzbhydra
+  template:
+    metadata:
+      labels:
+        app: nzbhydra
+    spec:
+      containers:
+      - name: nzbhydra
+        image: linuxserver/nzbhydra2
+        ports:
+          - name: web
+            containerPort: 5076
+        volumeMounts:
+        - mountPath: /config
+          name: flexvolsmb-nzbhydra-config
+        - mountPath: /downloads
+          name: flexvolsmb-pvr-downloads
+          subPath: downloads
+      volumes:
+      - name: flexvolsmb-nzbhydra-config
+        persistentVolumeClaim:
+          claimName: flexvolsmb-nzbhydra-config
+      - name: flexvolsmb-pvr-downloads
+        persistentVolumeClaim:
+          claimName: flexvolsmb-pvr-downloads
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: nzbhydra
+  namespace: pvr
+spec:
+  entryPoints:
+    - websecure
+  routes:
+  - match: Host(`index.pvr.spamasaurus.com`)
+    kind: Rule
+    services:
+    - name: nzbhydra
+      port: 5076
+    middlewares:
+      - name: ldap-authentication@file
+      - name: security-headers@file
+  tls:
+    options:
+      name: defaults@file
+    certResolver: default
+    domains:
+    - main: '*.pvr.spamasaurus.com'
+      sans:
+        - 'pvr.spamasaurus.com'
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: flexvolsmb-nzbhydra-config
+  namespace: pvr
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteMany
+  storageClassName: flexvolsmb-nzbhydra-config
+  flexVolume:
+    driver: mount/smb
+    secretRef:
+      name: smb-secret
+    options:
+      opts: domain=bessems.eu,file_mode=0777,dir_mode=0777,iocharset=utf8
+      server: 192.168.11.225
+      share: /K3s.Volumes/nzbhydra/config
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: flexvolsmb-nzbhydra-config
+  namespace: pvr
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: flexvolsmb-nzbhydra-config
+  resources:
+    requests:
+      storage: 1Gi

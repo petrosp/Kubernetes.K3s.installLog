@@ -1,0 +1,23 @@
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: longhorn-dashboard
+  namespace: default
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`storage.k3s.spamasaurus.com`)
+      kind: Rule
+      services:
+        - name: longhorn-frontend
+          port: 80
+          namespace: longhorn-system
+  tls:
+    options:
+      name: default
+    certResolver: default
+    domains:
+    - main: '*.k3s.spamasaurus.com'
+      sans:
+      - 'k3s.spamasaurus.com'

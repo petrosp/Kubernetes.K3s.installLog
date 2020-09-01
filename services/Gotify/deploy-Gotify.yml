@@ -1,0 +1,89 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: gotify
+spec:
+  ports:
+    - protocol: TCP
+      name: web
+      port: 80
+  selector:
+    app: gotify
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gotify
+  labels:
+    app: gotify
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gotify
+  template:
+    metadata:
+      labels:
+        app: gotify
+    spec:
+      containers:
+      - name: gotify
+        image: gotify/server
+        ports:
+          - name: web
+            containerPort: 80
+        volumeMounts:
+        - mountPath: /app/data
+          name: flexvolsmb-gotify-data
+      volumes:
+      - name: flexvolsmb-gotify-data
+        persistentVolumeClaim:
+          claimName: flexvolsmb-gotify-data
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: gotify
+spec:
+  entryPoints:
+    - websecure
+  routes:
+  - match: Host(`notify.spamasaurus.com`)
+    kind: Rule
+    services:
+    - name: gotify
+      port: 80
+    middlewares:
+      - name: security-headers@file
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: flexvolsmb-gotify-data
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteMany
+  storageClassName: flexvolsmb-gotify-data
+  flexVolume:
+    driver: mount/smb
+    secretRef:
+      name: smb-secret
+    options:
+      opts: domain=bessems.eu,file_mode=0777,dir_mode=0777,iocharset=utf8,nobrl
+      server: 192.168.11.225
+      share: /K3s.Volumes/gotify/data
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: flexvolsmb-gotify-data
+  namespace: default
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: flexvolsmb-gotify-data
+  resources:
+    requests:
+      storage: 1Gi

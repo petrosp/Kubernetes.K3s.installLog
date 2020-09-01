@@ -1,0 +1,10 @@
+server:
+  dataStorage:
+    enabled: true
+    size: 1Gi
+    storageClass: flexvolsmb-vault-data
+    accessMode: ReadWriteMany
+  priorityClassName: system-cluster-critical
+
+ui:
+  enabled: true

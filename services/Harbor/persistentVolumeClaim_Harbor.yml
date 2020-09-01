@@ -1,0 +1,204 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: flexvolsmb-harbor-chartmuseum
+  namespace: harbor
+spec:
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteMany
+  storageClassName: flexvolsmb-harbor-chartmuseum
+  flexVolume:
+    driver: mount/smb
+    secretRef:
+      name: smb-secret
+      namespace: default
+    options:
+      opts: domain=bessems.eu,file_mode=0700,dir_mode=0700,uid=999,gid=999,iocharset=utf8,nobrl
+      server: 192.168.11.225
+      share: /K3s.Volumes/harbor/chartmuseum
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: flexvolsmb-harbor-chartmuseum
+  namespace: harbor
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: flexvolsmb-harbor-chartmuseum
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: flexvolsmb-harbor-database
+  namespace: harbor
+spec:
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteMany
+  storageClassName: flexvolsmb-harbor-database
+  flexVolume:
+    driver: mount/smb
+    secretRef:
+      name: smb-secret
+      namespace: default
+    options:
+      opts: domain=bessems.eu,file_mode=0700,dir_mode=0700,uid=999,gid=999,iocharset=utf8,nobrl
+      server: 192.168.11.225
+      share: /K3s.Volumes/harbor/database
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: flexvolsmb-harbor-database
+  namespace: harbor
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: flexvolsmb-harbor-database
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: flexvolsmb-harbor-jobservice
+  namespace: harbor
+spec:
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteMany
+  storageClassName: flexvolsmb-harbor-jobservice
+  flexVolume:
+    driver: mount/smb
+    secretRef:
+      name: smb-secret
+      namespace: default
+    options:
+      opts: domain=bessems.eu,file_mode=0700,dir_mode=0700,uid=10000,gid=10000,iocharset=utf8,nobrl
+      server: 192.168.11.225
+      share: /K3s.Volumes/harbor/jobservice
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: flexvolsmb-harbor-jobservice
+  namespace: harbor
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: flexvolsmb-harbor-jobservice
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: flexvolsmb-harbor-redis
+  namespace: harbor
+spec:
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteMany
+  storageClassName: flexvolsmb-harbor-redis
+  flexVolume:
+    driver: mount/smb
+    secretRef:
+      name: smb-secret
+      namespace: default
+    options:
+      opts: domain=bessems.eu,file_mode=0700,dir_mode=0700,iocharset=utf8,nobrl
+      server: 192.168.11.225
+      share: /K3s.Volumes/harbor/redis
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: flexvolsmb-harbor-redis
+  namespace: harbor
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: flexvolsmb-harbor-redis
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: flexvolsmb-harbor-registry
+  namespace: harbor
+spec:
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteMany
+  storageClassName: flexvolsmb-harbor-registry
+  flexVolume:
+    driver: mount/smb
+    secretRef:
+      name: smb-secret
+      namespace: default
+    options:
+      opts: domain=bessems.eu,file_mode=0700,dir_mode=0700,uid=10000,gid=10000,iocharset=utf8,nobrl
+      server: 192.168.11.225
+      share: /K3s.Volumes/harbor/registry
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: flexvolsmb-harbor-registry
+  namespace: harbor
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: flexvolsmb-harbor-registry
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: flexvolsmb-harbor-trivy
+  namespace: harbor
+spec:
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteMany
+  storageClassName: flexvolsmb-harbor-trivy
+  flexVolume:
+    driver: mount/smb
+    secretRef:
+      name: smb-secret
+      namespace: default
+    options:
+      opts: domain=bessems.eu,file_mode=0700,dir_mode=0700,uid=10000,gid=10000,iocharset=utf8,nobrl
+      server: 192.168.11.225
+      share: /K3s.Volumes/harbor/trivy
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: flexvolsmb-harbor-trivy
+  namespace: harbor
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: flexvolsmb-harbor-trivy
+  resources:
+    requests:
+      storage: 10Gi
+

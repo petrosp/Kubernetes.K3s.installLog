@@ -1,0 +1,25 @@
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: traefik
+  namespace: default
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`ingress.spamasaurus.com`)
+      kind: Rule
+      services:
+        - name: api@internal
+          kind: TraefikService
+      middlewares:
+        - name: 2fa-authentication@file
+        - name: security-headers@file
+  tls:
+    certResolver: default
+    options:
+      name: defaults@file
+    domains:
+    - main: '*.spamasaurus.com'
+      sans:
+      - 'spamasaurus.com'

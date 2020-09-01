@@ -1,0 +1,44 @@
+ports:
+  web:
+#    port: 80
+#    exposedPort: 80
+    redirectTo: websecure
+#  websecure:
+#    port: 443
+#    exposedPort: 443
+
+volumes:
+  - name: traefik-configmap
+    mountPath: /etc/traefik
+    type: configMap
+
+persistence:
+  enabled: true
+  accessMode: ReadWriteMany
+  path: /data
+  existingClaim: "traefik"
+#  size: 1Gi
+#  subPath: 'acme.json'
+
+env:
+  - name: CF_API_EMAIL
+    valueFrom: 
+      secretKeyRef:
+        name: traefik-cloudflare
+        key: CF_API_EMAIL
+  - name: CF_API_KEY
+    valueFrom: 
+      secretKeyRef:
+        name: traefik-cloudflare
+        key: CF_API_KEY
+
+securityContext:
+  capabilities:
+    drop: []
+  readOnlyRootFilesystem: true
+  runAsGroup: 0
+  runAsNonRoot: false
+  runAsUser: 0
+
+podSecurityContext:
+  fsGroup: 0

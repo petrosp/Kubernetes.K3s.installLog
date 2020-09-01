@@ -1,0 +1,33 @@
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: harbor
+  namespace: harbor
+spec:
+  entryPoints:
+    - websecure
+  routes:
+  - match: Host(`registry.spamasaurus.com`)
+    kind: Rule
+    services:
+    - name: harbor-harbor-portal
+      namespace: harbor
+      port: 80
+    middlewares:
+      - name: security-headers@file
+  - match: Host(`registry.spamasaurus.com`) && PathPrefix(`/api/`, `/service/`, `/v2/`, `/chartrepo/`, `/c/`)
+    kind: Rule
+    services:
+    - name: harbor-harbor-core
+      namespace: harbor
+      port: 80
+    middlewares:
+      - name: security-headers@file
+  - match: Host(`notary.spamasaurus.com`)
+    kind: Rule
+    services:
+    - name: harbor-harbor-notary-server
+      namespace: harbor
+      port: 4443
+    middlewares:
+      - name: security-headers@file

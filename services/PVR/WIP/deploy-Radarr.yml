@@ -1,0 +1,115 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: radarr
+  namespace: pvr
+spec:
+  type: NodePort
+  ports:
+    - protocol: TCP
+      name: web
+      port: 7878
+      nodePort: 30020
+  selector:
+    app: radarr
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: radarr
+  namespace: pvr
+  labels:
+    app: radarr
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: radarr
+  template:
+    metadata:
+      labels:
+        app: radarr
+    spec:
+      containers:
+      - name: radarr
+        image: linuxserver/radarr
+        ports:
+          - name: web
+            containerPort: 7878
+        volumeMounts:
+        - mountPath: /config
+          name: flexvolsmb-radarr-config
+        - mountPath: /movies
+          name: flexvolsmb-pvr-movies
+        - mountPath: /downloads
+          name: flexvolsmb-pvr-downloads
+          subPath: downloads
+      volumes:
+      - name: flexvolsmb-radarr-config
+        persistentVolumeClaim:
+          claimName: flexvolsmb-radarr-config
+      - name: flexvolsmb-pvr-movies
+        persistentVolumeClaim:
+          claimName: flexvolsmb-pvr-movies
+      - name: flexvolsmb-pvr-downloads
+        persistentVolumeClaim:
+          claimName: flexvolsmb-pvr-downloads
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: radarr
+  namespace: pvr
+spec:
+  entryPoints:
+    - websecure
+  routes:
+  - match: Host(`movies.pvr.spamasaurus.com`)
+    kind: Rule
+    services:
+    - name: radarr
+      port: 7878
+    middlewares:
+      - name: ldap-authentication@file
+      - name: security-headers@file
+  tls:
+    options:
+      name: defaults@file
+    certResolver: default
+    domains:
+    - main: '*.pvr.spamasaurus.com'
+      sans:
+        - 'pvr.spamasaurus.com'
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: flexvolsmb-radarr-config
+  namespace: pvr
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteMany
+  storageClassName: flexvolsmb-radarr-config
+  flexVolume:
+    driver: mount/smb
+    secretRef:
+      name: smb-secret
+    options:
+      opts: domain=bessems.eu,file_mode=0777,dir_mode=0777,iocharset=utf8
+      server: 192.168.11.225
+      share: /K3s.Volumes/radarr/config
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: flexvolsmb-radarr-config
+  namespace: pvr
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: flexvolsmb-radarr-config
+  resources:
+    requests:
+      storage: 1Gi

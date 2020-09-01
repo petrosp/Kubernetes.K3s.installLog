@@ -1,0 +1,175 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: drone
+spec:
+  ports:
+    - protocol: TCP
+      name: ui
+      port: 80
+  selector:
+    app: drone
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: drone
+  labels:
+    app: drone
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: drone
+  template:
+    metadata:
+      annotations:
+        vault.hashicorp.com/agent-inject: "true"
+        vault.hashicorp.com/agent-inject-secret-drone: "secret/drone"
+        vault.hashicorp.com/role: "drone"
+        vault.hashicorp.com/agent-inject-template-drone: |
+          {{ with secret "secret/drone" -}}
+            export DRONE_RPC_SECRET="{{ .Data.data.rpcsecret }}"
+            export DRONE_GITEA_CLIENT_ID="{{ .Data.data.giteaclientid }}"
+            export DRONE_GITEA_CLIENT_SECRET="{{ .Data.data.giteaclientsecret }}"
+          {{- end }}
+      labels:
+        app: drone
+    spec:
+#      serviceAccountName: drone
+      containers:
+      - name: drone
+        image: drone/drone
+        command: ["sh", "-c", ". /vault/secrets/drone && /bin/drone-server"]
+        env:
+        - name: DRONE_SERVER_PROTO
+          value: 'https'
+        - name: DRONE_SERVER_HOST
+          value: 'ci.spamasaurus.com'
+        - name: DRONE_SERVER_PORT
+          value: ':80'
+        - name: DRONE_TLS_AUTOCERT
+          value: 'false'
+        - name: DRONE_GITEA_SERVER
+          value: 'https://code.spamasaurus.com'
+#        - name: DRONE_LOGS_DEBUG
+#          value: 'true'
+        - name: DRONE_GIT_ALWAYS_AUTH
+          value: 'false'
+        - name: DRONE_AGENTS_ENABLED
+          value: 'true'
+        ports:
+          - name: ui
+            containerPort: 80
+        volumeMounts:
+        - mountPath: /data
+          name: flexvolsmb-drone-data
+      - name: drone-runner
+        image: drone/drone-runner-kube:latest
+        command: ["sh", "-c", ". /vault/secrets/drone && /bin/drone-runner-kube"]
+        ports:
+        - containerPort: 3000
+        env:
+        - name: DRONE_RPC_HOST
+          value: 'ci.spamasaurus.com'
+        - name: DRONE_RPC_PROTO
+          value: 'https'
+      volumes:
+      - name: flexvolsmb-drone-data
+        persistentVolumeClaim:
+          claimName: flexvolsmb-drone-data
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: drone
+  labels:
+    app: drone
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: drone
+spec:
+  entryPoints:
+    - websecure
+  routes:
+  - match: Host(`ci.spamasaurus.com`)
+    kind: Rule
+    services:
+    - name: drone
+      port: 80
+    middlewares:
+      - name: security-headers@file
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: flexvolsmb-drone-data
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteMany
+  storageClassName: flexvolsmb-drone-data
+  flexVolume:
+    driver: mount/smb
+    secretRef:
+      name: smb-secret
+    options:
+      opts: domain=bessems.eu,file_mode=0777,dir_mode=0777,iocharset=utf8,nobrl
+      server: 192.168.11.225
+      share: /K3s.Volumes/drone/data
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: flexvolsmb-drone-data
+  namespace: default
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: flexvolsmb-drone-data
+  resources:
+    requests:
+      storage: 1Gi
+---
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  namespace: default
+  name: drone
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - secrets
+    verbs:
+      - create
+      - delete
+  - apiGroups:
+      - ""
+    resources:
+      - pods
+      - pods/log
+    verbs:
+      - get
+      - create
+      - delete
+      - list
+      - watch
+      - update
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: drone
+  namespace: default
+subjects:
+  - kind: ServiceAccount
+    name: default
+    namespace: default
+roleRef:
+  kind: Role
+  name: drone
+  apiGroup: rbac.authorization.k8s.io

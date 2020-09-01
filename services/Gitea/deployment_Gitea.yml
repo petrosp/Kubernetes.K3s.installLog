@@ -1,0 +1,160 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: gitea
+spec:
+  ports:
+    - protocol: TCP
+      name: ui
+      port: 3000
+    - protocol: TCP
+      name: ssh
+      port: 22
+      targetPort: ssh
+  selector:
+    app: gitea
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gitea
+  labels:
+    app: gitea
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gitea
+  template:
+    metadata:
+      labels:
+        app: gitea
+    spec:
+      containers:
+      - name: gitea
+        image: gitea/gitea:1
+        env:
+        - name: DB_TYPE
+          value: 'sqlite3'
+        - name: ROOT_URL
+          value: 'https://code.spamasaurus.com'
+        - name: USER_UID
+          value: "1000"
+        - name: USER_GID
+          value: "1000"
+        ports:
+          - name: ui
+            containerPort: 3000
+          - name: ssh
+            containerPort: 22
+        volumeMounts:
+        - mountPath: /data
+          name: flexvolsmb-gitea-data
+        - mountPath: /data/ssh
+          name: flexvolsmb-gitea-ssh
+          subPath: ssh
+#      securityContext:
+#        runAsUser: 1000
+#        runAsGroup: 1000
+#        fsGroup: 1000
+      volumes:
+      - name: flexvolsmb-gitea-data
+        persistentVolumeClaim:
+          claimName: flexvolsmb-gitea-data
+      - name: flexvolsmb-gitea-ssh
+        persistentVolumeClaim:
+          claimName: flexvolsmb-gitea-ssh
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: gitea
+spec:
+  entryPoints:
+    - websecure
+  routes:
+  - match: Host(`code.spamasaurus.com`)
+    kind: Rule
+    services:
+    - name: gitea
+      port: 3000
+    middlewares:
+      - name: security-headers@file
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRouteTCP
+metadata:
+  name: gitea
+spec:
+  entryPoints:
+    - ssh
+  routes:
+  - match: HostSNI(`*`)
+    kind: Rule
+    services:
+    - name: gitea
+      port: 22
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: flexvolsmb-gitea-data
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteMany
+  storageClassName: flexvolsmb-gitea-data
+  flexVolume:
+    driver: mount/smb
+    secretRef:
+      name: smb-secret
+    options:
+      opts: domain=bessems.eu,file_mode=0777,dir_mode=0777,uid=1000,gid=1000,iocharset=utf8,nobrl
+      server: 192.168.11.225
+      share: /K3s.Volumes/gitea/data
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: flexvolsmb-gitea-data
+  namespace: default
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: flexvolsmb-gitea-data
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: flexvolsmb-gitea-ssh
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteMany
+  storageClassName: flexvolsmb-gitea-ssh
+  flexVolume:
+    driver: mount/smb
+    secretRef:
+      name: smb-secret
+    options:
+      opts: domain=bessems.eu,file_mode=0600,dir_mode=0600,iocharset=utf8
+      server: 192.168.11.225
+      share: /K3s.Volumes/gitea/ssh
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: flexvolsmb-gitea-ssh
+  namespace: default
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: flexvolsmb-gitea-ssh
+  resources:
+    requests:
+      storage: 1Gi

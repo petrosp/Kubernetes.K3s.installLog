@@ -1,0 +1,26 @@
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: cronjob-spotweb-retrievearticles
+spec:
+  schedule: "0 * * * *"
+  successfulJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: php-retrievearticles
+            image: php:7.4-cli
+            workingDir: /var/www/sw.itch.fyi
+            args:
+            - php
+            - /var/www/sw.itch.fyi/retrieve.php
+            volumeMounts:
+            - name: flexvolsmb-lighttpd-websites
+              mountPath: /var/www/
+          volumes:
+          - name: flexvolsmb-lighttpd-websites
+            persistentVolumeClaim:
+              claimName: flexvolsmb-lighttpd-websites
+          restartPolicy: OnFailure

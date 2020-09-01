@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: flexvolsmb-traefik-data
+  namespace: kube-system
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteMany
+  storageClassName: flexvolsmb-traefik-data
+  flexVolume:
+    driver: mount/smb
+    secretRef:
+      name: smb-secret
+      namespace: default
+    options:
+      opts: domain=bessems.eu,file_mode=0600,dir_mode=0600,iocharset=utf8,nobrl
+      server: 192.168.11.225
+      share: /K3s.Volumes/traefik/data
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: traefik
+  namespace: kube-system
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: flexvolsmb-traefik-data
+  resources:
+    requests:
+      storage: 1Gi

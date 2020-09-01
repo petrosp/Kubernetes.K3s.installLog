@@ -1,0 +1,135 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: bitwarden
+spec:
+  ports:
+    - protocol: TCP
+      name: ui
+      port: 8080
+    - protocol: TCP
+      name: websocket
+      port: 3012
+  selector:
+    app: bitwarden
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bitwarden
+  labels:
+    app: bitwarden
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: bitwarden
+  template:
+    metadata:
+      annotations:
+        vault.hashicorp.com/agent-inject: "true"
+        vault.hashicorp.com/agent-inject-secret-bitwarden: "secret/bitwarden"
+        vault.hashicorp.com/role: "bitwarden"
+        vault.hashicorp.com/agent-inject-template-bitwarden: |
+          {{ with secret "secret/bitwarden" -}}
+            export ADMIN_TOKEN="{{ .Data.data.admintoken }}"
+            export YUBICO_CLIENT_ID="{{ .Data.data.yubicoclientid }}"
+            export YUBICO_SECRET_KEY="{{ .Data.data.yubicosecretkey }}"
+          {{- end }}
+      labels:
+        app: bitwarden
+    spec:
+      serviceAccountName: bitwarden
+      containers:
+      - name: bitwarden
+        image: bitwardenrs/server
+        args: ["sh", "-c", ". /vault/secrets/bitwarden && /start.sh"]
+        env:
+        - name: ENABLE_DB_WAL
+          value: "false"
+        - name: ROCKET_PORT
+          value: "8080"
+        - name: SIGNUPS_ALLOWED
+          value: "false"
+        - name: WEBSOCKET_ENABLED
+          value: "true"
+        - name: WEBSOCKET_PORT
+          value: "3012"
+        - name: LOG_LEVEL
+          value: "debug"
+        - name: EXTENDED_LOGGING
+          value: "true"
+        ports:
+          - name: ui
+            containerPort: 8080
+          - name: websocket
+            containerPort: 3012
+        volumeMounts:
+        - mountPath: /data
+          name: flexvolsmb-bitwarden-data
+      volumes:
+      - name: flexvolsmb-bitwarden-data
+        persistentVolumeClaim:
+          claimName: flexvolsmb-bitwarden-data
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: bitwarden
+  labels:
+    app: bitwarden
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: bitwarden
+spec:
+  entryPoints:
+    - websecure
+  routes:
+  - match: Host(`vault.spamasaurus.com`)
+    kind: Rule
+    services:
+    - name: bitwarden
+      port: 8080
+    middlewares:
+      - name: security-headers@file
+  - match: Host(`vault.spamasaurus.com`) && Path(`/notifications/hub`)
+    kind: Rule
+    services:
+    - name: bitwarden
+      port: 3012
+    middlewares:
+      - name: security-headers@file
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: flexvolsmb-bitwarden-data
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteMany
+  storageClassName: flexvolsmb-bitwarden-data
+  flexVolume:
+    driver: mount/smb
+    secretRef:
+      name: smb-secret
+    options:
+      opts: domain=bessems.eu,file_mode=0777,dir_mode=0777,iocharset=utf8,nobrl
+      server: 192.168.11.225
+      share: /K3s.Volumes/bitwarden/data
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: flexvolsmb-bitwarden-data
+  namespace: default
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: flexvolsmb-bitwarden-data
+  resources:
+    requests:
+      storage: 1Gi

@@ -1,0 +1,42 @@
+expose:
+  ingress:
+    hosts:
+      core: registry.spamasaurus.com
+      notary: notary.spamasaurus.com
+
+externalURL: https://registry.spamasaurus.com
+
+persistence:
+  enabled: true
+  resourcePolicy: "keep"
+  persistentVolumeClaim:
+    registry:
+      existingClaim: "flexvolsmb-harbor-registry"
+      storageClass: "-"
+      accessMode: ReadWriteMany
+      size: 5Gi
+    chartmuseum:
+      existingClaim: "flexvolsmb-harbor-chartmuseum"
+      storageClass: "-"
+      accessMode: ReadWriteMany
+      size: 5Gi
+    jobservice:
+      existingClaim: "flexvolsmb-harbor-jobservice"
+      storageClass: "-"
+      accessMode: ReadWriteMany
+      size: 1Gi
+    database:
+      existingClaim: "flexvolsmb-harbor-database"
+      storageClass: "-"
+      accessMode: ReadWriteMany
+      size: 1Gi
+    redis:
+      existingClaim: "flexvolsmb-harbor-redis"
+      storageClass: "-"
+      accessMode: ReadWriteMany
+      size: 1Gi
+    trivy:
+      existingClaim: "flexvolsmb-harbor-trivy"
+      storageClass: "-"
+      accessMode: ReadWriteMany
+      size: 1Gi

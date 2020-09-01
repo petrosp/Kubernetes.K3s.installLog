@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: flexvolsmb-vault-data
+  namespace: vault
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteMany
+  storageClassName: flexvolsmb-vault-data
+  flexVolume:
+    driver: mount/smb
+    secretRef:
+      name: smb-secret
+      namespace: default
+    options:
+      opts: domain=bessems.eu,file_mode=0755,dir_mode=0755,uid=100,gid=1000,iocharset=utf8,nobrl
+      server: 192.168.11.225
+      share: /K3s.Volumes/vault/data
+---
+#apiVersion: v1
+#kind: PersistentVolumeClaim
+#metadata:
+#  name: data-vault-0
+#  namespace: vault
+#spec:
+#  accessModes:
+#    - ReadWriteMany
+#  storageClassName: flexvolsmb-vault-data
+#  resources:
+#    requests:
+#      storage: 1Gi

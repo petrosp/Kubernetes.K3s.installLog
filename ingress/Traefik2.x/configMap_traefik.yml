@@ -1,0 +1,112 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: traefik-configmap
+  namespace: kube-system
+data:
+  traefik.yml: |
+    global:
+      checkNewVersion: true
+      sendAnonymousUsage: true
+    entryPoints:
+      web:
+        address: :8000
+      websecure:
+        address: :8443
+        forwardedHeaders:
+          insecure: true
+        http:
+          tls:
+            options: defaults@file
+            certResolver: default
+            domains:
+              - main: '*.spamasaurus.com'
+                sans:
+                  - 'spamasaurus.com'
+              - main: '*.bessems.com'
+                sans:
+                  - 'bessems.com'
+              - main: '*.bessems.eu'
+                sans:
+                  - 'bessems.eu'
+              - main: '*.gabaldon.eu'
+                sans:
+                  - 'gabaldon.eu'
+              - main: '*.gabaldon.nl'
+                sans:
+                  - 'gabaldon.nl'
+              - main: '*.itch.fyi'
+                sans:
+                  - 'itch.fyi'
+    #      trustedIPs:
+    #        - "127.0.0.0/8"
+    #        - "192.168.5.0/24"
+    #        - "192.168.11.0/24"
+      ssh:
+        address: :2222
+      traefik:
+        address: :9000
+    providers:
+      file:
+        filename: /etc/traefik/dynamic.yml
+      kubernetesCRD: {}
+    api:
+      dashboard: true
+    ping: {}
+    #accessLog: {}
+    log:
+      level: INFO
+    #  level: DEBUG
+    certificatesResolvers:
+      default:
+        acme:
+          email: letsencrypt.org.danny@spamasaurus.com
+          storage: /data/acme.json
+          dnsChallenge:
+            provider: cloudflare
+            delayBeforeCheck: 5m0s
+            resolvers:
+            - 1.1.1.1:53
+            - 1.0.0.1:53
+  dynamic.yml: |
+    http:
+      middlewares:
+        force-tls:
+          redirectScheme:
+            scheme: https
+        2fa-authentication:
+          forwardAuth:
+            address: "https://auth.spamasaurus.com/api/verify?rd=https://auth.spamasaurus.com/"
+            trustForwardHeader: true
+        security-headers:
+          headers:
+            forceSTSHeader: true
+            stsSeconds: 315360000
+            stsIncludeSubdomains: true
+            stsPreload: true
+      routers:
+        force-tls:
+          entryPoints:
+            - "web"
+          rule: "HostRegexp(`{any:.+}`)"
+          middlewares:
+            - "force-tls"
+          service: noop@internal
+    tls:
+      options:
+        defaults:
+          minVersion: VersionTLS12
+          sniStrict: true
+          curvePreferences:
+            - secp521r1
+            - secp384r1
+          cipherSuites:
+            - TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+            - TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305
+            - TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305
+            - TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
+            - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+            - TLS_AES_128_GCM_SHA256
+            - TLS_AES_256_GCM_SHA384
+            - TLS_CHACHA20_POLY1305_SHA256
+            - TLS_FALLBACK_SCSV

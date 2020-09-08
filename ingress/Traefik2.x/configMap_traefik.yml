@@ -9,6 +9,8 @@ data:
       checkNewVersion: true
       sendAnonymousUsage: true
     entryPoints:
+      rtmp:
+        address: :1935
       web:
         address: :8000
       websecure:
@@ -42,8 +44,6 @@ data:
     #        - "127.0.0.0/8"
     #        - "192.168.5.0/24"
     #        - "192.168.11.0/24"
-      ssh:
-        address: :2222
       traefik:
         address: :9000
     providers:

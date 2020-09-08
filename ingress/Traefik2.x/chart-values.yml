@@ -1,11 +1,10 @@
 ports:
+  rtmp:
+    port: 1935
+    exposedPort: 1935
+    expose: true
   web:
-#    port: 80
-#    exposedPort: 80
     redirectTo: websecure
-#  websecure:
-#    port: 443
-#    exposedPort: 443
 
 volumes:
   - name: traefik-configmap
@@ -17,8 +16,6 @@ persistence:
   accessMode: ReadWriteMany
   path: /data
   existingClaim: "traefik"
-#  size: 1Gi
-#  subPath: 'acme.json'
 
 env:
   - name: CF_API_EMAIL

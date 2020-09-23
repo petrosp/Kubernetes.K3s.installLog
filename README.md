@@ -67,7 +67,7 @@ Store credentials in `secret`:
 kubectl create secret generic --type=mount/smb smb-secret --from-literal=username=<<omitted>> --from-literal=password=<<omitted>>
 ```
 
-#### 1.3) *Optional* `storageClass` for NFS:
+#### 1.3) *Optional* `storageClass` for block storage:
 Install [Longhorn](https://code.spamasaurus.com/djpbessems/Kubernetes.K3s.installLog/src/branch/master/storage/Longhorn/README.md) for block storage with NFS-backed backup schedules.
 
 ### 2) Ingress Controller

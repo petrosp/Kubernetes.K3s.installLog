@@ -29,7 +29,13 @@ kubectl apply -f system/UpgradeController/plan-Server.yml -f system/UpgradeContr
 
 ### 1) Persistent storage
 
-SMB (CIFS) `FlexVolume`:
+#### 1.1) SMB (CIFS) `CSI-driver`:
+See https://github.com/kubernetes-csi/csi-driver-smb:
+```
+curl -skSL https://raw.githubusercontent.com/kubernetes-csi/csi-driver-smb/master/deploy/install-driver.sh | bash -s master --
+```
+
+#### 1.2) SMB (CIFS) `FlexVolume`:
 ```
 curl -Ls https://github.com/juliohm1978/kubernetes-cifs-volumedriver/blob/master/install.yaml -o storage/flexVolSMB/daemonSet-flexVolSMB.yml
 ```
@@ -203,10 +209,10 @@ kubectl exec -i guacamole-<pod-id> --container mysql -- mysql -uguacamole -pguac
 kubectl rollout restart deployment guacamole
 ```
 ##### 4.7) [Harbor](https://goharbor.io/)    <small>(container image registry)</small>
-Create `ingressRoute` and `persistentVolumeClaim`
+Create `ingressRoute` and `storageClass`
 ```
 kubectl apply -f services/Harbor/ingressRoute-Harbor.yml
-kubectl apply -f services/Harbor/persistentVolumeClaim_Harbor.yml
+kubectl apply -f services/Harbor/storageClass-Harbor.yml
 ```
 Install Helm chart
 ```

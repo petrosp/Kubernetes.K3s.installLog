@@ -29,13 +29,13 @@ kubectl apply -f system/UpgradeController/plan-Server.yml -f system/UpgradeContr
 
 ### 1) Persistent storage
 
-#### 1.1) SMB (CIFS) `CSI-driver`:
+#### 1.1) `storageClass` for SMB (CIFS):
 See https://github.com/kubernetes-csi/csi-driver-smb:
 ```
 curl -skSL https://raw.githubusercontent.com/kubernetes-csi/csi-driver-smb/master/deploy/install-driver.sh | bash -s master --
 ```
 
-#### 1.2) SMB (CIFS) `FlexVolume`:
+#### 1.2) `flexVolume` for SMB (CIFS):
 ```
 curl -Ls https://github.com/juliohm1978/kubernetes-cifs-volumedriver/blob/master/install.yaml -o storage/flexVolSMB/daemonSet-flexVolSMB.yml
 ```
@@ -66,8 +66,8 @@ Store credentials in `secret`:
 ```
 kubectl create secret generic --type=mount/smb smb-secret --from-literal=username=<<omitted>> --from-literal=password=<<omitted>>
 ```
----
-*Optional*  
+
+#### 1.3) *Optional* `storageClass` for NFS:
 Install [Longhorn](https://code.spamasaurus.com/djpbessems/Kubernetes.K3s.installLog/src/branch/master/storage/Longhorn/README.md) for block storage with NFS-backed backup schedules.
 
 ### 2) Ingress Controller

@@ -68,6 +68,8 @@ data:
             resolvers:
             - 1.1.1.1:53
             - 1.0.0.1:53
+    pilot:
+      token: "45bfb48a-9c35-4fb1-97c8-e9ec3303c697"
   dynamic.yml: |
     http:
       middlewares:

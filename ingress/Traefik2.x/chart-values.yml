@@ -1,6 +1,6 @@
 image:
   name: traefik
-  tag: 2.2.11
+#  tag: 2.2.11
 
 ports:
   rtmp:

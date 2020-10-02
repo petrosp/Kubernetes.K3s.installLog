@@ -36,10 +36,11 @@ spec:
       labels:
         app: drone
     spec:
-#      serviceAccountName: drone
+      serviceAccountName: drone
       containers:
       - name: drone
-        image: drone/drone
+#        image: registry.spamasaurus.com/proxy/drone/drone:latest
+        image: drone/drone:latest
         command: ["sh", "-c", ". /vault/secrets/drone && /bin/drone-server"]
         env:
         - name: DRONE_SERVER_PROTO
@@ -65,6 +66,7 @@ spec:
         - mountPath: /data
           name: flexvolsmb-drone-data
       - name: drone-runner
+#        image: registry.spamasaurus.com/proxy/drone/drone-runner-kube:latest
         image: drone/drone-runner-kube:latest
         command: ["sh", "-c", ". /vault/secrets/drone && /bin/drone-runner-kube"]
         ports:
@@ -167,7 +169,7 @@ metadata:
   namespace: default
 subjects:
   - kind: ServiceAccount
-    name: default
+    name: drone
     namespace: default
 roleRef:
   kind: Role

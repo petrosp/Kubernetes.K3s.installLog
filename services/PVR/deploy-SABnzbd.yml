@@ -4,12 +4,10 @@ metadata:
   name: sabnzbd
   namespace: pvr
 spec:
-  type: NodePort
   ports:
     - protocol: TCP
       name: web
       port: 8080
-      nodePort: 30030
   selector:
     app: sabnzbd
 ---
@@ -37,21 +35,22 @@ spec:
           - name: web
             containerPort: 8080
         volumeMounts:
-        - mountPath: /config
+        - mountPath: /config/sabnzbd.ini
+          subPath: sabnzbd.ini
           name: flexvolsmb-sabnzbd-config
         - mountPath: /downloads
-          name: flexvolsmb-pvr-downloads
           subPath: downloads
+          name: smb-pvr-volatile
         - mountPath: /incomplete-downloads
-          name: flexvolsmb-pvr-downloads
           subPath: incomplete-downloads
+          name: smb-pvr-volatile
       volumes:
       - name: flexvolsmb-sabnzbd-config
         persistentVolumeClaim:
           claimName: flexvolsmb-sabnzbd-config
-      - name: flexvolsmb-pvr-downloads
+      - name: smb-pvr-volatile
         persistentVolumeClaim:
-          claimName: flexvolsmb-pvr-downloads
+          claimName: smb-pvr-volatile
 ---
 apiVersion: traefik.containo.us/v1alpha1
 kind: IngressRoute
@@ -68,7 +67,14 @@ spec:
     - name: sabnzbd
       port: 8080
     middlewares:
-      - name: ldap-authentication@file
+      - name: 2fa-authentication@file
+      - name: security-headers@file
+  - match: Host(`download.pvr.spamasaurus.com`) && (Headers(`X-Api-Key`, `<removed>`) || Query(`apikey=<removed>`))
+    kind: Rule
+    services:
+    - name: sabnzbd
+      port: 8080
+    middlewares:
       - name: security-headers@file
   tls:
     options:

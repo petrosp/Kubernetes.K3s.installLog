@@ -1,0 +1,30 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: pvr
+provisioner: smb.csi.k8s.io
+parameters:
+  source: "//192.168.11.225/K3s.StorageClass/pvr"
+  csi.storage.k8s.io/node-stage-secret-name: "smb-credentials"
+  csi.storage.k8s.io/node-stage-secret-namespace: "default"
+  createSubDir: "true"  # optional: create a sub dir for new volume
+reclaimPolicy: Retain  # only retain is supported
+volumeBindingMode: Immediate
+mountOptions:
+  - dir_mode=0777
+  - file_mode=0777
+  - iocharset=utf8
+  - cache=none
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: smb-pvr-volatile
+  namespace: pvr
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: pvr
+  resources:
+    requests:
+      storage: 50Gi

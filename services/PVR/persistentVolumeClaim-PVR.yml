@@ -1,39 +1,6 @@
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: flexvolsmb-pvr-downloads
-  namespace: pvr
-spec:
-  capacity:
-    storage: 1Gi
-  accessModes:
-    - ReadWriteMany
-  storageClassName: flexvolsmb-pvr-downloads
-  flexVolume:
-    driver: mount/smb
-    secretRef:
-      name: smb-secret
-    options:
-      opts: domain=bessems.eu,file_mode=0777,dir_mode=0777,iocharset=utf8,cache=none
-      server: 192.168.11.225
-      share: /Volatile/downloads
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: flexvolsmb-pvr-downloads
-  namespace: pvr
-spec:
-  accessModes:
-    - ReadWriteMany
-  storageClassName: flexvolsmb-pvr-downloads
-  resources:
-    requests:
-      storage: 1Gi
----
-apiVersion: v1
-kind: PersistentVolume
-metadata:
   name: flexvolsmb-pvr-movies
   namespace: pvr
 spec:

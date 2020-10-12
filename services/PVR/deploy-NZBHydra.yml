@@ -1,76 +1,76 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: sonarr
+  name: nzbhydra
   namespace: pvr
 spec:
-  type: NodePort
   ports:
     - protocol: TCP
       name: web
-      port: 8989
-      nodePort: 30040
+      port: 5076
   selector:
-    app: sonarr
+    app: nzbhydra
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: sonarr
+  name: nzbhydra
   namespace: pvr
   labels:
-    app: sonarr
+    app: nzbhydra
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: sonarr
+      app: nzbhydra
   template:
     metadata:
       labels:
-        app: sonarr
+        app: nzbhydra
     spec:
       containers:
-      - name: sonarr
-        image: linuxserver/sonarr:preview
+      - name: nzbhydra
+        image: linuxserver/nzbhydra2
         ports:
           - name: web
-            containerPort: 8989
+            containerPort: 5076
         volumeMounts:
         - mountPath: /config
-          name: flexvolsmb-sonarr-config
-        - mountPath: /tv
-          name: flexvolsmb-pvr-series
+          name: flexvolsmb-nzbhydra-config
         - mountPath: /downloads
-          name: flexvolsmb-pvr-downloads
+          name: smb-pvr-volatile
           subPath: downloads
       volumes:
-      - name: flexvolsmb-sonarr-config
+      - name: flexvolsmb-nzbhydra-config
         persistentVolumeClaim:
-          claimName: flexvolsmb-sonarr-config
-      - name: flexvolsmb-pvr-series
+          claimName: flexvolsmb-nzbhydra-config
+      - name: smb-pvr-volatile
         persistentVolumeClaim:
-          claimName: flexvolsmb-pvr-series
-      - name: flexvolsmb-pvr-downloads
-        persistentVolumeClaim:
-          claimName: flexvolsmb-pvr-downloads
+          claimName: smb-pvr-volatile
 ---
 apiVersion: traefik.containo.us/v1alpha1
 kind: IngressRoute
 metadata:
-  name: sonarr
+  name: nzbhydra
   namespace: pvr
 spec:
   entryPoints:
     - websecure
   routes:
-  - match: Host(`series.pvr.spamasaurus.com`)
+  - match: Host(`index.pvr.spamasaurus.com`)
     kind: Rule
     services:
-    - name: sonarr
-      port: 8989
+    - name: nzbhydra
+      port: 5076
     middlewares:
-      - name: ldap-authentication@file
+      - name: 2fa-authentication@file
+      - name: security-headers@file
+  - match: Host(`index.pvr.spamasaurus.com`) && (Headers(`X-Api-Key`, `<removed>`) || Query(`apikey=<removed>`))
+    kind: Rule
+    services:
+    - name: nzbhydra
+      port: 5076
+    middlewares:
       - name: security-headers@file
   tls:
     options:
@@ -84,32 +84,32 @@ spec:
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: flexvolsmb-sonarr-config
+  name: flexvolsmb-nzbhydra-config
   namespace: pvr
 spec:
   capacity:
     storage: 1Gi
   accessModes:
     - ReadWriteMany
-  storageClassName: flexvolsmb-sonarr-config
+  storageClassName: flexvolsmb-nzbhydra-config
   flexVolume:
     driver: mount/smb
     secretRef:
       name: smb-secret
     options:
-      opts: domain=bessems.eu,file_mode=0777,dir_mode=0777,uid=1000,gid=1000,iocharset=utf8
+      opts: domain=bessems.eu,file_mode=0777,dir_mode=0777,iocharset=utf8
       server: 192.168.11.225
-      share: /K3s.Volumes/sonarr/config
+      share: /K3s.Volumes/nzbhydra/config
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: flexvolsmb-sonarr-config
+  name: flexvolsmb-nzbhydra-config
   namespace: pvr
 spec:
   accessModes:
     - ReadWriteMany
-  storageClassName: flexvolsmb-sonarr-config
+  storageClassName: flexvolsmb-nzbhydra-config
   resources:
     requests:
       storage: 1Gi

@@ -4,12 +4,10 @@ metadata:
   name: radarr
   namespace: pvr
 spec:
-  type: NodePort
   ports:
     - protocol: TCP
       name: web
       port: 7878
-      nodePort: 30020
   selector:
     app: radarr
 ---
@@ -42,7 +40,7 @@ spec:
         - mountPath: /movies
           name: flexvolsmb-pvr-movies
         - mountPath: /downloads
-          name: flexvolsmb-pvr-downloads
+          name: smb-pvr-volatile
           subPath: downloads
       volumes:
       - name: flexvolsmb-radarr-config
@@ -51,9 +49,9 @@ spec:
       - name: flexvolsmb-pvr-movies
         persistentVolumeClaim:
           claimName: flexvolsmb-pvr-movies
-      - name: flexvolsmb-pvr-downloads
+      - name: smb-pvr-volatile
         persistentVolumeClaim:
-          claimName: flexvolsmb-pvr-downloads
+          claimName: smb-pvr-volatile
 ---
 apiVersion: traefik.containo.us/v1alpha1
 kind: IngressRoute
@@ -70,7 +68,14 @@ spec:
     - name: radarr
       port: 7878
     middlewares:
-      - name: ldap-authentication@file
+      - name: 2fa-authentication@file
+      - name: security-headers@file
+  - match: Host(`movies.pvr.spamasaurus.com`) && (Headers(`X-Api-Key`, `<removed>`) || Query(`apikey=<removed>`))
+    kind: Rule
+    services:
+    - name: radarr
+      port: 7878
+    middlewares:
       - name: security-headers@file
   tls:
     options:

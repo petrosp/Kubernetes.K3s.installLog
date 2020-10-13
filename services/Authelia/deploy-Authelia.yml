@@ -76,6 +76,7 @@ spec:
       port: 9091
     middlewares:
       - name: security-headers@file
+      - name: compression@file
 ---
 apiVersion: v1
 kind: PersistentVolume

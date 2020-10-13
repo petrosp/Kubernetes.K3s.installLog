@@ -71,6 +71,7 @@ spec:
       port: 8080
     middlewares:
     - name: security-headers@file
+    - name: compression@file
 ---
 apiVersion: v1
 kind: PersistentVolume

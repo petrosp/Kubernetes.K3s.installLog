@@ -109,6 +109,7 @@ spec:
     middlewares:
       - name: prepend-path-guacamole
       - name: security-headers@file
+      - name: compression@file
 ---
 apiVersion: v1
 kind: PersistentVolume

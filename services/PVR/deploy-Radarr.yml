@@ -70,6 +70,7 @@ spec:
     middlewares:
       - name: 2fa-authentication@file
       - name: security-headers@file
+      - name: compression@file
   - match: Host(`movies.pvr.spamasaurus.com`) && (Headers(`X-Api-Key`, `<removed>`) || Query(`apikey=<removed>`))
     kind: Rule
     services:
@@ -77,6 +78,7 @@ spec:
       port: 7878
     middlewares:
       - name: security-headers@file
+      - name: compression@file
   tls:
     options:
       name: defaults@file

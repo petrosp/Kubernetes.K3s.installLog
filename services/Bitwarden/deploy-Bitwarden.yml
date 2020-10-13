@@ -94,6 +94,7 @@ spec:
       port: 8080
     middlewares:
       - name: security-headers@file
+      - name: compression@file
   - match: Host(`vault.spamasaurus.com`) && Path(`/notifications/hub`)
     kind: Rule
     services:
@@ -101,6 +102,7 @@ spec:
       port: 3012
     middlewares:
       - name: security-headers@file
+      - name: compression@file
 ---
 apiVersion: v1
 kind: PersistentVolume

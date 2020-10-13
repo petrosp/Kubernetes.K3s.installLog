@@ -74,6 +74,7 @@ spec:
       port: 3000
     middlewares:
       - name: security-headers@file
+      - name: compression@file
 ---
 apiVersion: v1
 kind: PersistentVolume

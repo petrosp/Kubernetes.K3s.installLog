@@ -60,14 +60,7 @@ spec:
       port: 80
     middlewares:
     - name: security-headers@file
-#  tls:
-#    options:
-#      name: defaults@file
-#    certResolver: default
-#    domains:
-#    - main: '*.itch.fyi'
-#      sans:
-#        - 'itch.fyi'
+    - name: compression@file
 ---
 apiVersion: v1
 kind: PersistentVolume

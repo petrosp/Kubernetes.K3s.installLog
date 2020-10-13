@@ -14,5 +14,5 @@ spec:
           namespace: vault
           port: 8200
       middlewares:
-#        - name: ldap-authentication@file
         - name: security-headers@file
+        - name: compression@file

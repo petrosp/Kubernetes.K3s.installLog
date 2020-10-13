@@ -15,11 +15,4 @@ spec:
       middlewares:
         - name: 2fa-authentication@file
         - name: security-headers@file
-  tls:
-    certResolver: default
-    options:
-      name: defaults@file
-    domains:
-    - main: '*.spamasaurus.com'
-      sans:
-      - 'spamasaurus.com'
+        - name: compression@file

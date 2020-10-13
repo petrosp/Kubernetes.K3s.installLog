@@ -78,6 +78,7 @@ spec:
     middlewares:
       - name: 2fa-authentication@file
       - name: security-headers@file
+      - name: compression@file
 ---
 apiVersion: v1
 kind: PersistentVolume

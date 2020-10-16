@@ -235,25 +235,25 @@ kubectl apply -f services/Lighttpd/cronJob-Spotweb.yml
 kubectl apply -f services/PVR/persistentVolumeClaim-PVR.yml
 kubectl apply -f services/PVR/storageClass-PVR.yml
 ```
-###### 4.9.1) [NZBHydra]()    <small>(index aggregator)</small>
+###### 4.9.1) [NZBHydra](https://github.com/theotherp/nzbhydra2)    <small>(index aggregator)</small>
 ```
 kubectl apply -f services/PVR/deploy-NZBHydra.yml
 ```
-###### 4.9.2) [Plex]()    <small>(media library)</small>
-~kubectl apply -f services/PVR/deploy-Plex.yml~
-###### 4.9.3) [Radarr]()    <small>(movie management)</small>
+###### 4.9.2) [Plex](https://www.plex.tv/)    <small>(media library)</small>
+~~kubectl apply -f services/PVR/deploy-Plex.yml~~
+###### 4.9.3) [Radarr](https://radarr.video/)    <small>(movie management)</small>
 ```
 kubectl apply -f services/PVR/deploy-Radarr.yml
 ```
-###### 4.9.4) [Readarr]()    <small>(book management)</small>
+###### 4.9.4) [Readarr](https://readarr.com/)    <small>(book management)</small>
 ```
 kubectl apply -f services/PVR/deploy-Readarr.yml
 ```
-###### 4.9.5) [SABnzbd]()    <small>(download client)</small>
+###### 4.9.5) [SABnzbd](https://sabnzbd.org/)    <small>(download client)</small>
 ```
 kubectl apply -f services/PVR/deploy-SABnzbd.yml
 ```
-###### 4.9.6) [Sonarr]()    <small>(tv management)</small>
+###### 4.9.6) [Sonarr](https://sonarr.tv/)    <small>(tv management)</small>
 ```
 kubectl apply -f services/PVR/deploy-Sonarr.yml
 ```

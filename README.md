@@ -20,7 +20,7 @@ curl -sfL https://get.k3s.io | K3S_URL=https://<fqdn or ip>:6443 K3S_TOKEN=<valu
 
 Install Rancher's [System Upgrade Controller](https://rancher.com/docs/k3s/latest/en/upgrades/automated/):
 ```
-kubectl apply -f https://github.com/rancher/system-upgrade-controller/releases/download/v0.4.0/system-upgrade-controller.yaml
+kubectl apply -f https://github.com/rancher/system-upgrade-controller/releases/download/v0.6.2/system-upgrade-controller.yaml
 ```
 Apply a [server (master node)](https://code.spamasaurus.com/djpbessems/Kubernetes.K3s.installLog/src/branch/master/system/UpgradeController/plan-Server.yml) and [agent (worker node)](https://code.spamasaurus.com/djpbessems/Kubernetes.K3s.installLog/src/branch/master/system/UpgradeController/plan-Agent.yml) plan:
 ```
@@ -229,23 +229,46 @@ kubectl apply -f services/Lighttpd/configMap_lighttpd.yml
 kubectl apply -f services/Lighttpd/deploy_Lighttpd.yml
 kubectl apply -f services/Lighttpd/cronJob-Spotweb.yml
 ```
-##### 4.9) [Shaarli](https://github.com/shaarli/Shaarli)    <small>(bookmarks/notes)</small>
+##### 4.9) PVR `namespace`    <small>(automated media management)</small>
+*Containers use shared resources to be able to interact with downloaded files*
+```
+kubectl apply -f services/PVR/persistentVolumeClaim-PVR.yml
+kubectl apply -f services/PVR/storageClass-PVR.yml
+```
+###### 4.9.1) [NZBHydra]()    <small>(index aggregator)</small>
+```
+kubectl apply -f services/PVR/deploy-NZBHydra.yml
+```
+###### 4.9.2) [Plex]()    <small>(media library)</small>
+~kubectl apply -f services/PVR/deploy-Plex.yml~
+###### 4.9.3) [Radarr]()    <small>(movie management)</small>
+```
+kubectl apply -f services/PVR/deploy-Radarr.yml
+```
+###### 4.9.4) [Readarr]()    <small>(book management)</small>
+```
+kubectl apply -f services/PVR/deploy-Readarr.yml
+```
+###### 4.9.5) [SABnzbd]()    <small>(download client)</small>
+```
+kubectl apply -f services/PVR/deploy-SABnzbd.yml
+```
+###### 4.9.6) [Sonarr]()    <small>(tv management)</small>
+```
+kubectl apply -f services/PVR/deploy-Sonarr.yml
+```
+
+##### 4.10) [Shaarli](https://github.com/shaarli/Shaarli)    <small>(bookmarks/notes)</small>
 ```
 kubectl apply -f services/Shaarli/deploy_Shaarli.yml
 ```
-##### 4.10) [Theia](https://theia-ide.org/)    <small>(web IDE)</small>
+##### 4.11) [Theia](https://theia-ide.org/)    <small>(web IDE)</small>
 ```
 kubectl apply -f services/Theia/deploy_Theia.yml
 ```
-##### 4.11) [Traefik-Certs-Dumper](https://github.com/ldez/traefik-certs-dumper)    <small>(certificate tooling)</small>
+##### 4.12) [Traefik-Certs-Dumper](https://github.com/ldez/traefik-certs-dumper)    <small>(certificate tooling)</small>
 ```
 kubectl apply -f services/TraefikCertsDumper/deploy-TraefikCertsDumper.yml
-```
-##### 4.12) External `Endpoint`s
-###### 4.12.1) NZBHydra, Plex, Radarr, SABnzbd & Sonarr    <small>(automated media management)</small>
-*Running externally, due to connectivity requirements*
-```
-kubectl apply -f services/PVR/deploy-PVR.yml
 ```
 ### 5) Miscellaneous
 *Various notes/useful links*  

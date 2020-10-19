@@ -1,0 +1,57 @@
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: pvr-apikeys
+  namespace: pvr
+spec:
+  entryPoints:
+    - websecure
+  routes:
+  - match: Host(`index.pvr.spamasaurus.com`) && (Headers(`X-Api-Key`, `<removed>`) || Query(`apikey=<removed>`))
+    kind: Rule
+    services:
+    - name: nzbhydra
+      port: 5076
+    middlewares:
+      - name: security-headers@file
+      - name: compression@file
+  - match: Host(`movies.pvr.spamasaurus.com`) && (Headers(`X-Api-Key`, `<removed>`) || Query(`apikey=<removed>`))
+    kind: Rule
+    services:
+    - name: radarr
+      port: 7878
+    middlewares:
+      - name: security-headers@file
+      - name: compression@file
+  - match: Host(`books.pvr.spamasaurus.com`) && (Headers(`X-Api-Key`, `<removed>`) || Query(`apikey=<removed>`))
+    kind: Rule
+    services:
+    - name: readarr
+      port: 8787
+    middlewares:
+      - name: security-headers@file
+      - name: compression@file
+  - match: Host(`download.pvr.spamasaurus.com`) && (Headers(`X-Api-Key`, `<removed>`) || Query(`apikey=<removed>`))
+    kind: Rule
+    services:
+    - name: sabnzbd
+      port: 8080
+    middlewares:
+      - name: security-headers@file
+      - name: compression@file
+  - match: Host(`series.pvr.spamasaurus.com`) && (Headers(`X-Api-Key`, `<removed>`) || Query(`apikey=<removed>`))
+    kind: Rule
+    services:
+    - name: sonarr
+      port: 8989
+    middlewares:
+      - name: security-headers@file
+      - name: compression@file
+  tls:
+    options:
+      name: defaults@file
+    certResolver: default
+    domains:
+    - main: '*.pvr.spamasaurus.com'
+      sans:
+        - 'pvr.spamasaurus.com'

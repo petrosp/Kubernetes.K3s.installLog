@@ -40,6 +40,8 @@ spec:
         volumeMounts:
         - mountPath: /config
           name: flexvolsmb-readarr-config
+        - mountPath: /books
+          name: flexvolsmb-pvr-books
         - mountPath: /downloads
           name: smb-pvr-volatile
           subPath: downloads
@@ -47,6 +49,9 @@ spec:
       - name: flexvolsmb-readarr-config
         persistentVolumeClaim:
           claimName: flexvolsmb-readarr-config
+      - name: flexvolsmb-pvr-books
+        persistentVolumeClaim:
+          claimName: flexvolsmb-pvr-books
       - name: smb-pvr-volatile
         persistentVolumeClaim:
           claimName: smb-pvr-volatile

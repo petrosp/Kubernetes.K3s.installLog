@@ -53,7 +53,9 @@ data:
   spamasaurus.com.conf: |
     $HTTP["host"] == "spamasaurus.com" {
       server.document-root = "/var/www/spamasaurus.com/public"
-     }
+
+      index-file.names += ("spamasaurusRex.login.php")
+    }
   sw.itch.fyi.conf: |
     $HTTP["host"] == "sw.itch.fyi" {
       server.document-root = "/var/www/sw.itch.fyi/"

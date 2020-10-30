@@ -7,7 +7,7 @@ parameters:
   source: "//192.168.11.225/K3s.StorageClass/harbor"
   csi.storage.k8s.io/node-stage-secret-name: "smb-credentials"
   csi.storage.k8s.io/node-stage-secret-namespace: "default"
-  createSubDir: "true"  # optional: create a sub dir for new volume
+  createSubDir: "false"  # optional: create a sub dir for new volume
 reclaimPolicy: Retain  # only retain is supported
 volumeBindingMode: Immediate
 mountOptions:
@@ -25,7 +25,7 @@ parameters:
   source: "//192.168.11.225/K3s.StorageClass/harbor-db"
   csi.storage.k8s.io/node-stage-secret-name: "smb-credentials"
   csi.storage.k8s.io/node-stage-secret-namespace: "default"
-  createSubDir: "true"  # optional: create a sub dir for new volume
+  createSubDir: "false"  # optional: create a sub dir for new volume
 reclaimPolicy: Retain  # only retain is supported
 volumeBindingMode: Immediate
 mountOptions:

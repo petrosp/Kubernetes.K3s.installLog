@@ -28,7 +28,7 @@ spec:
     spec:
       containers:
       - name: theia
-        image: theiaide/theia-full
+        image: registry.spamasaurus.com/proxy/theiaide/theia-full
         ports:
           - name: web
             containerPort: 3000

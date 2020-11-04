@@ -10,6 +10,10 @@ ports:
   web:
     redirectTo: websecure
 
+service:
+  spec:
+    externalTrafficPolicy: Local
+
 volumes:
   - name: traefik-configmap
     mountPath: /etc/traefik

@@ -49,7 +49,7 @@ spec:
           restartPolicy: Never
           containers:
             - name: kubectl
-              image: bitnami/kubectl
+              image: registry.spamasaurus.com/proxy/bitnami/kubectl
               command:
                 - 'bash'
                 - '-c'

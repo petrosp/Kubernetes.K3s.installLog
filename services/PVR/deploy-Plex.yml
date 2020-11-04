@@ -1,74 +1,89 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: radarr
+  name: plex
   namespace: pvr
 spec:
   ports:
     - protocol: TCP
       name: web
-      port: 7878
+      port: 32400
   selector:
-    app: radarr
+    app: plex
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: plex-remoteaccess
+  namespace: pvr
+spec:
+  ports:
+  - port: 32400
+    protocol: TCP
+    targetPort: 32400
+  selector:
+    app: plex
+  type: LoadBalancer
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: radarr
+  name: plex
   namespace: pvr
   labels:
-    app: radarr
+    app: plex
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: radarr
+      app: plex
   template:
     metadata:
       labels:
-        app: radarr
+        app: plex
     spec:
       containers:
-      - name: radarr
-        image: registry.spamasaurus.com/proxy/linuxserver/radarr:nightly
+      - name: plex
+        image: registry.spamasaurus.com/proxy/linuxserver/plex
         ports:
           - name: web
-            containerPort: 7878
+            containerPort: 32400
+        env:
+          - name: VERSION
+            value: latest
         volumeMounts:
         - mountPath: /config
-          name: flexvolsmb-radarr-config
-        - mountPath: /movies
+          name: flexvolsmb-plex-config
+        - mountPath: /data/series
+          name: flexvolsmb-pvr-series
+        - mountPath: /data/movies
           name: flexvolsmb-pvr-movies
-        - mountPath: /downloads
-          name: smb-pvr-volatile
-          subPath: downloads
       volumes:
-      - name: flexvolsmb-radarr-config
+      - name: flexvolsmb-plex-config
         persistentVolumeClaim:
-          claimName: flexvolsmb-radarr-config
+          claimName: flexvolsmb-plex-config
+      - name: flexvolsmb-pvr-series
+        persistentVolumeClaim:
+          claimName: flexvolsmb-pvr-series
       - name: flexvolsmb-pvr-movies
         persistentVolumeClaim:
           claimName: flexvolsmb-pvr-movies
-      - name: smb-pvr-volatile
-        persistentVolumeClaim:
-          claimName: smb-pvr-volatile
 ---
 apiVersion: traefik.containo.us/v1alpha1
 kind: IngressRoute
 metadata:
-  name: radarr
+  name: plex
   namespace: pvr
 spec:
   entryPoints:
     - websecure
   routes:
-  - match: Host(`movies.pvr.spamasaurus.com`)
+  - match: Host(`media.pvr.spamasaurus.com`)
     kind: Rule
     services:
-    - name: radarr
-      port: 7878
+    - name: plex
+      port: 32400
     middlewares:
-      - name: 2fa-authentication@file
       - name: security-headers@file
       - name: compression@file
   tls:
@@ -83,32 +98,32 @@ spec:
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: flexvolsmb-radarr-config
+  name: flexvolsmb-plex-config
   namespace: pvr
 spec:
   capacity:
     storage: 1Gi
   accessModes:
     - ReadWriteMany
-  storageClassName: flexvolsmb-radarr-config
+  storageClassName: flexvolsmb-plex-config
   flexVolume:
     driver: mount/smb
     secretRef:
       name: smb-secret
     options:
-      opts: domain=bessems.eu,file_mode=0777,dir_mode=0777,iocharset=utf8
+      opts: domain=bessems.eu,file_mode=0777,dir_mode=0777,uid=911,gid=911,iocharset=utf8
       server: 192.168.11.225
-      share: /K3s.Volumes/radarr/config
+      share: /K3s.Volumes/plex/config
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: flexvolsmb-radarr-config
+  name: flexvolsmb-plex-config
   namespace: pvr
 spec:
   accessModes:
     - ReadWriteMany
-  storageClassName: flexvolsmb-radarr-config
+  storageClassName: flexvolsmb-plex-config
   resources:
     requests:
       storage: 1Gi

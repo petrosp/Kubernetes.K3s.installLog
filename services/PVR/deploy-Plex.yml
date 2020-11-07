@@ -21,6 +21,25 @@ spec:
   - port: 32400
     protocol: TCP
     targetPort: 32400
+    name: web
+  - port: 32469
+    protocol: TCP
+    targetPort: 32469
+    name: dlna
+  selector:
+    app: plex
+  type: LoadBalancer
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: plex-dlna
+  namespace: pvr
+spec:
+  ports:
+  - port: 1900
+    protocol: UDP
+    targetPort: 1900
   selector:
     app: plex
   type: LoadBalancer
@@ -48,6 +67,10 @@ spec:
         ports:
           - name: web
             containerPort: 32400
+          - containerPort: 1900
+            protocol: UDP
+          - name: dlna
+            containerPort: 32469
         env:
           - name: VERSION
             value: latest

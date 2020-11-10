@@ -9,13 +9,13 @@
 ## K3s cluster 
 On first node:
 ```  
-curl -sfL https://get.k3s.io | sh -s - --no-deploy traefik
+curl -sfL https://get.k3s.io | sh -s - --no-deploy traefik --cluster-init
 cat /var/lib/rancher/k3s/server/token
 kubectl config view --raw
 ```
 On subsequent nodes:
 ```
-curl -sfL https://get.k3s.io | K3S_URL=https://<fqdn or ip>:6443 K3S_TOKEN=<value from master> sh -
+curl -sfL https://get.k3s.io | K3S_TOKEN=<value from master> sh -s - --server https://<fqdn or ip>:6443 --no-deploy traefik
 ```
 
 Install Rancher's [System Upgrade Controller](https://rancher.com/docs/k3s/latest/en/upgrades/automated/):
@@ -33,6 +33,10 @@ kubectl apply -f system/UpgradeController/plan-Server.yml -f system/UpgradeContr
 See https://github.com/kubernetes-csi/csi-driver-smb:
 ```
 curl -skSL https://raw.githubusercontent.com/kubernetes-csi/csi-driver-smb/master/deploy/install-driver.sh | bash -s master --
+```
+Store credentials in `secret`:
+```
+kubectl create secret generic smb-credentials --from-literal username=<<omitted>> --from-literal domain=<<omitted>> --from-literal password=<<omitted>>
 ```
 
 #### 1.2) `flexVolume` for SMB (CIFS):
@@ -74,7 +78,7 @@ Install [Longhorn](https://code.spamasaurus.com/djpbessems/Kubernetes.K3s.instal
 ##### 2.1) Create `configMap`, `secret` and `persistentVolumeClaim`
 The `configMap` contains Traefik's static and dynamic config:
 ```
-kubectl apply -f ingress/Traefik2.x/configMap_traefik.yml
+kubectl apply -f ingress/Traefik2.x/configMap-Traefik.yml
 ```
 
 The `secret` contains credentials for Cloudflare's API:
@@ -84,7 +88,7 @@ kubectl create secret generic traefik-cloudflare --from-literal=CF_API_EMAIL=<<o
 
 The `persistentVolumeClaim` will contain `/data/acme.json` (referenced as `existingClaim`):
 ```
-kubectl apply -f ingress/Traefik2.x/pvc_traefik.yml
+kubectl apply -f ingress/Traefik2.x/persistentVolumeClaim-Traefik.yml
 ```
 ##### 2.2) Install Helm Chart
 See [Traefik 2.x Helm Chart](https://github.com/containous/traefik-helm-chart):
@@ -104,13 +108,13 @@ kubectl delete ingressroute traefik-dashboard --namespace kube-system
 ##### 3.1) Create `persistentVolume` and `ingressRoute`
 *Requires specifying a `uid` & `gid` in the flexvolSMB-`persistentVolume`*  
 ```
+kubectl create namespace vault
 kubectl apply -f services/Vault/persistentVolume-Vault.yml
 kubectl apply -f services/Vault/ingressRoute-Vault.yml
 ```
 ##### 3.2) Install Helm Chart
 See [HashiCorp Vault](https://www.vaultproject.io/docs/platform/k8s/helm/run):  
 ```
-kubectl create namespace vault
 helm repo add hashicorp https://helm.releases.hashicorp.com
 helm repo update
 helm install vault hashicorp/vault --namespace vault --values=services/Vault/chart-values.yml
@@ -122,6 +126,8 @@ Configure Vault for use;
 ```
 # kubectl exec -n vault -it vault-0 -- sh
 
+# It might be necessary to first login with an existing token:
+# vault login
 vault auth enable kubernetes
 vault write auth/kubernetes/config \
    token_reviewer_jwt="$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)" \
@@ -139,8 +145,8 @@ vault secrets enable -path=secret -version=2 kv
 ### 4) Services
 ##### 4.1) [Adminer](https://www.adminer.org/)    <small>(SQL management)</small>
 ```
-kubectl apply -f services/Adminer/configMap_Adminer.yml
-kubectl apply -f services/Adminer/deploy_Adminer.yml
+kubectl apply -f services/Adminer/configMap-Adminer.yml
+kubectl apply -f services/Adminer/deploy-Adminer.yml
 ```
 Vault configuration:
 ```
@@ -156,7 +162,7 @@ vault policy write adminer /home/vault/app-policy.hcl
 ##### 4.2) [Bitwarden_rs](https://github.com/dani-garcia/bitwarden_rs)    <small>(password manager)</small>
 *Requires [mount.cifs](https://linux.die.net/man/8/mount.cifs)' option `nobrl`*
 ```
-kubectl apply -f services/Bitwarden/deployment_Bitwarden.yml
+kubectl apply -f services/Bitwarden/deploy-Bitwarden.yml
 ```
 Vault configuration:
 ```
@@ -173,7 +179,7 @@ vault policy write bitwarden /home/vault/app-policy.hcl
 ```
 ##### 4.3) [DroneCI](https://drone.io/)    <small>(contineous delivery)</small>
 ```
-kubectl apply -f services/DroneCI/deployment_DroneCI.yml
+kubectl apply -f services/DroneCI/deploy-DroneCI.yml
 ```
 Vault configuration:
 ```
@@ -190,17 +196,17 @@ vault policy write drone /home/vault/app-policy.hcl
 ```
 ##### 4.4) [Gitea](https://gitea.io/)    <small>(git repository)</small>
 ```
-kubectl apply -f services/Gitea/deployment_Gitea.yml
+kubectl apply -f services/Gitea/deploy-Gitea.yml
 ```
 ##### 4.5) [Gotify](https://gotify.net/)    <small>(notifications)</small>
 ```
-kubectl apply -f services/Gotify/deploy_Gotify.yml
+kubectl apply -f services/Gotify/deploy-Gotify.yml
 ```
 ##### 4.6) [Guacamole](https://guacamole.apache.org/doc/gug/guacamole-docker.html)    <small>(remote desktop gateway)</small>
 *Requires specifying a `uid` & `gid` in both the `securityContext` of the MySQL container and the `persistentVolume`*
 ```
-kubectl apply -f services/Guacamole/configMap_Guacamole.yml
-kubectl apply -f services/Guacamole/deployment_Guacamole.yml
+kubectl apply -f services/Guacamole/configMap-Guacamole.yml
+kubectl apply -f services/Guacamole/deploy-Guacamole.yml
 ```
 Wait for the included containers to start, then perform the following commands to initialize the database:
 ```
@@ -211,12 +217,12 @@ kubectl rollout restart deployment guacamole
 ##### 4.7) [Harbor](https://goharbor.io/)    <small>(container image registry)</small>
 Create `ingressRoute` and `storageClass`
 ```
+kubectl create namespace harbor
 kubectl apply -f services/Harbor/ingressRoute-Harbor.yml
 kubectl apply -f services/Harbor/storageClass-Harbor.yml
 ```
 Install Helm chart
 ```
-kubectl create namespace harbor
 helm repo add harbor https://helm.goharbor.io
 helm repo update
 helm install harbor harbor/harbor --namespace harbor --values=services/Harbor/chart-values.yml
@@ -225,13 +231,14 @@ helm install harbor harbor/harbor --namespace harbor --values=services/Harbor/ch
 ##### 4.8) [Lighttpd](https://www.lighttpd.net/)    <small>(webserver)</small>
 *Serves various semi-containerized websites; respective webcontent is stored on fileshare*  
 ```
-kubectl apply -f services/Lighttpd/configMap_lighttpd.yml
-kubectl apply -f services/Lighttpd/deploy_Lighttpd.yml
+kubectl apply -f services/Lighttpd/configMap-Lighttpd.yml
+kubectl apply -f services/Lighttpd/deploy-Lighttpd.yml
 kubectl apply -f services/Lighttpd/cronJob-Spotweb.yml
 ```
 ##### 4.9) PVR `namespace`    <small>(automated media management)</small>
 *Containers use shared resources to be able to interact with downloaded files*
 ```
+kubectl create secret generic --type=mount/smb smb-secret --from-literal=username=<<omitted>> --from-literal=password=<<omitted>> -n pvr
 kubectl apply -f services/PVR/persistentVolumeClaim-PVR.yml
 kubectl apply -f services/PVR/storageClass-PVR.yml
 ```
@@ -260,11 +267,11 @@ kubectl apply -f services/PVR/deploy-Sonarr.yml
 
 ##### 4.10) [Shaarli](https://github.com/shaarli/Shaarli)    <small>(bookmarks/notes)</small>
 ```
-kubectl apply -f services/Shaarli/deploy_Shaarli.yml
+kubectl apply -f services/Shaarli/deploy-Shaarli.yml
 ```
 ##### 4.11) [Theia](https://theia-ide.org/)    <small>(web IDE)</small>
 ```
-kubectl apply -f services/Theia/deploy_Theia.yml
+kubectl apply -f services/Theia/deploy-Theia.yml
 ```
 ##### 4.12) [Traefik-Certs-Dumper](https://github.com/ldez/traefik-certs-dumper)    <small>(certificate tooling)</small>
 ```

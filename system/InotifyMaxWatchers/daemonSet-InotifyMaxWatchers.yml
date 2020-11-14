@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: inotify-max-watchers
+  namespace: kube-system
+spec:
+  selector:
+    matchLabels:
+      app: inotify-max-watchers
+  template:
+    metadata:
+      name: inotify-max-watchers
+      labels:
+        app: inotify-max-watchers
+    spec:
+      containers:
+        - name: inotify-max-watchers
+          image: alpine
+          imagePullPolicy: Always
+          securityContext:
+            privileged: true
+          command:
+          - "/bin/sh"
+          - "-c"
+          - "echo 'fs.inotify.max_user_watches=524288' | tee /etc/sysctl.conf; sysctl -p && tail -f /dev/null"

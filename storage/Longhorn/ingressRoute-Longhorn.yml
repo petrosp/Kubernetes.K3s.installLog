@@ -7,7 +7,7 @@ spec:
   entryPoints:
     - websecure
   routes:
-    - match: Host(`storage.k3s.spamasaurus.com`)
+    - match: Host(`storage.spamasaurus.com`)
       kind: Rule
       services:
         - name: longhorn-frontend
@@ -18,6 +18,6 @@ spec:
       name: default
     certResolver: default
     domains:
-    - main: '*.k3s.spamasaurus.com'
+    - main: '*.spamasaurus.com'
       sans:
-      - 'k3s.spamasaurus.com'
+      - 'spamasaurus.com'

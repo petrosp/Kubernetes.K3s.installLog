@@ -15,7 +15,7 @@ kubectl config view --raw
 ```
 On subsequent nodes:
 ```
-curl -sfL https://get.k3s.io | K3S_TOKEN=<value from master> sh -s - --server https://<fqdn or ip>:6443 --no-deploy traefik
+curl -sfL https://get.k3s.io | K3S_URL=https://<fqdn or ip>:6443 K3S_TOKEN=<value from master> sh -
 ```
 
 Install Rancher's [System Upgrade Controller](https://rancher.com/docs/k3s/latest/en/upgrades/automated/):
@@ -71,8 +71,38 @@ Store credentials in `secret`:
 kubectl create secret generic --type=mount/smb smb-secret --from-literal=username=<<omitted>> --from-literal=password=<<omitted>>
 ```
 
-#### 1.3) *Optional* `storageClass` for block storage:
-Install [Longhorn](https://code.spamasaurus.com/djpbessems/Kubernetes.K3s.installLog/src/branch/master/storage/Longhorn/README.md) for block storage with NFS-backed backup schedules.
+#### 1.3) `storageClass` for distributed block storage:
+See [Longhorn Helm Chart](https://longhorn.io/):
+```
+kubectl create namespace longhorn-system
+helm repo add longhorn https://charts.longhorn.io
+helm install longhorn longhorn/longhorn --namespace longhorn-system --values=storage/Longhorn/chart-values.yml
+```
+Expose Longhorn's dashboard through  `IngressRoute`:
+```
+kubectl apply -f storage/Longhorn/ingressRoute-Longhorn.yml
+```
+Add additional `storageClass` with backup schedule:
+***After** specifying a NFS backup target (syntax: `nfs://servername:/path/to/share`) through Longhorn's dashboard*
+```
+kind: StorageClass
+apiVersion: storage.k8s.io/v1
+metadata:
+  name: longhorn-dailybackup
+provisioner: driver.longhorn.io
+allowVolumeExpansion: true
+parameters:
+  numberOfReplicas: "3"
+  staleReplicaTimeout: "2880"
+  fromBackup: ""
+  recurringJobs: '[{"name":"backup", "task":"backup", "cron":"0 0 * * *", "retain":14}]'
+```
+Then make this the new default `storageClass`:
+```
+kubectl patch storageclass longhorn-dailybackup -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
+kubectl patch storageclass local-path -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"false"}}}'
+kubectl delete storageclass longhorn
+```
 
 ### 2) Ingress Controller
 ##### 2.1) Create `configMap`, `secret` and `persistentVolumeClaim`
@@ -247,7 +277,10 @@ kubectl apply -f services/PVR/storageClass-PVR.yml
 kubectl apply -f services/PVR/deploy-NZBHydra.yml
 ```
 ###### 4.9.2) [Plex](https://www.plex.tv/)    <small>(media library)</small>
-~~kubectl apply -f services/PVR/deploy-Plex.yml~~
+*Due to usage of symlinks, partially incompatible with SMB-share-backed storage*
+```
+kubectl apply -f services/PVR/deploy-Plex.yml
+```
 ###### 4.9.3) [Radarr](https://radarr.video/)    <small>(movie management)</small>
 ```
 kubectl apply -f services/PVR/deploy-Radarr.yml
@@ -284,4 +317,7 @@ kubectl apply -f services/TraefikCertsDumper/deploy-TraefikCertsDumper.yml
 
       
       kubectl get $(kubectl api-resources --verbs=list -o name | paste -sd, -) --ignore-not-found --all-namespaces
-* ...
+* `DaemonSet` to configure nodes' **sysctl** `fs.inotify.max-user-watches`:
+
+      
+      kubectl apply -f system/InotifyMaxWatchers/daemonSet-InotifyMaxWatchers.yml

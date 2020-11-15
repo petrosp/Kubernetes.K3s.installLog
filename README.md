@@ -9,7 +9,7 @@
 ## K3s cluster 
 On first node:
 ```  
-curl -sfL https://get.k3s.io | sh -s - --no-deploy traefik --cluster-init
+curl -sfL https://get.k3s.io | sh -s - --no-deploy traefik
 cat /var/lib/rancher/k3s/server/token
 kubectl config view --raw
 ```
@@ -18,6 +18,7 @@ On subsequent nodes:
 curl -sfL https://get.k3s.io | K3S_URL=https://<fqdn or ip>:6443 K3S_TOKEN=<value from master> sh -
 ```
 
+### 0) Configure automatic updates
 Install Rancher's [System Upgrade Controller](https://rancher.com/docs/k3s/latest/en/upgrades/automated/):
 ```
 kubectl apply -f https://github.com/rancher/system-upgrade-controller/releases/download/v0.6.2/system-upgrade-controller.yaml

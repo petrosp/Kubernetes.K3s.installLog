@@ -37,7 +37,7 @@ spec:
       serviceAccountName: adminer
       containers:
       - name: adminer
-        image: registry.spamasaurus.com/proxy/library/adminer
+        image: adminer
         ports:
           - name: web
             containerPort: 8080

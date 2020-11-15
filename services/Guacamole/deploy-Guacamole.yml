@@ -35,7 +35,7 @@ spec:
       hostname: guacamole
       containers:
       - name: guacamole
-        image: registry.spamasaurus.com/proxy/guacamole/guacamole
+        image: guacamole/guacamole
         env:
         - name: GUACD_HOSTNAME
           value: 'guacamole.default.svc.cluster.local'
@@ -53,7 +53,7 @@ spec:
           - name: ui
             containerPort: 8080
       - name: guacd
-        image: registry.spamasaurus.com/proxy/guacamole/guacd
+        image: guacamole/guacd
         env:
         - name: GUACD_LOG_LEVEL
           value: 'debug'
@@ -61,7 +61,7 @@ spec:
           - name: proxy
             containerPort: 4822
       - name: mysql
-        image: registry.spamasaurus.com/proxy/library/mysql:latest
+        image: mysql:latest
         securityContext:
           runAsUser: 999
           runAsGroup: 999

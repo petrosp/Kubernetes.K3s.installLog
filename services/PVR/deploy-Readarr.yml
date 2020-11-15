@@ -30,7 +30,7 @@ spec:
     spec:
       containers:
       - name: readarr
-        image: registry.spamasaurus.com/proxy/hotio/readarr:nightly
+        image: hotio/readarr:nightly
         env:
         - name: DEBUG
           value: 'yes'

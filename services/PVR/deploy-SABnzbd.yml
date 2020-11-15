@@ -30,7 +30,7 @@ spec:
     spec:
       containers:
       - name: sabnzbd
-        image: registry.spamasaurus.com/proxy/linuxserver/sabnzbd
+        image: linuxserver/sabnzbd
         ports:
           - name: web
             containerPort: 8080

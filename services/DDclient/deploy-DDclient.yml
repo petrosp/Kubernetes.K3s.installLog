@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: ddclient
-        image: registry.spamasaurus.com/proxy/linuxserver/ddclient
+        image: linuxserver/ddclient
         volumeMounts:
         - mountPath: /config
           name: ddclient-secret

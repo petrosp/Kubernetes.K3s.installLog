@@ -11,39 +11,6 @@ spec:
   selector:
     app: plex
 ---
-apiVersion: v1
-kind: Service
-metadata:
-  name: plex-remoteaccess
-  namespace: pvr
-spec:
-  ports:
-  - port: 32400
-    protocol: TCP
-    targetPort: 32400
-    name: web
-  - port: 32469
-    protocol: TCP
-    targetPort: 32469
-    name: dlna
-  selector:
-    app: plex
-  type: LoadBalancer
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: plex-dlna
-  namespace: pvr
-spec:
-  ports:
-  - port: 1900
-    protocol: UDP
-    targetPort: 1900
-  selector:
-    app: plex
-  type: LoadBalancer
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -61,30 +28,27 @@ spec:
       labels:
         app: plex
     spec:
+      hostNetwork: true
       containers:
       - name: plex
-        image: registry.spamasaurus.com/proxy/linuxserver/plex
+        image: linuxserver/plex
         ports:
           - name: web
             containerPort: 32400
-          - containerPort: 1900
-            protocol: UDP
-          - name: dlna
-            containerPort: 32469
         env:
           - name: VERSION
             value: latest
         volumeMounts:
         - mountPath: /config
-          name: flexvolsmb-plex-config
+          name: longhorn-plex-config
         - mountPath: /data/series
           name: flexvolsmb-pvr-series
         - mountPath: /data/movies
           name: flexvolsmb-pvr-movies
       volumes:
-      - name: flexvolsmb-plex-config
+      - name: longhorn-plex-config
         persistentVolumeClaim:
-          claimName: flexvolsmb-plex-config
+          claimName: longhorn-plex-config
       - name: flexvolsmb-pvr-series
         persistentVolumeClaim:
           claimName: flexvolsmb-pvr-series
@@ -119,34 +83,14 @@ spec:
         - 'pvr.spamasaurus.com'
 ---
 apiVersion: v1
-kind: PersistentVolume
-metadata:
-  name: flexvolsmb-plex-config
-  namespace: pvr
-spec:
-  capacity:
-    storage: 1Gi
-  accessModes:
-    - ReadWriteMany
-  storageClassName: flexvolsmb-plex-config
-  flexVolume:
-    driver: mount/smb
-    secretRef:
-      name: smb-secret
-    options:
-      opts: domain=bessems.eu,file_mode=0777,dir_mode=0777,uid=911,gid=911,iocharset=utf8
-      server: 192.168.11.225
-      share: /K3s.Volumes/plex/config
----
-apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: flexvolsmb-plex-config
+  name: longhorn-plex-config
   namespace: pvr
 spec:
   accessModes:
-    - ReadWriteMany
-  storageClassName: flexvolsmb-plex-config
+    - ReadWriteOnce
+  storageClassName: longhorn
   resources:
     requests:
       storage: 1Gi

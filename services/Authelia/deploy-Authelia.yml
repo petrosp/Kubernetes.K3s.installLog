@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: authelia
-        image: registry.spamasaurus.com/proxy/authelia/authelia
+        image: authelia/authelia
         env:
         - name: TZ
           value: Europe/Amsterdam
@@ -27,7 +27,7 @@ spec:
         - name: flexvolsmb-authelia-conf
           mountPath: /config
       - name: redis
-        image: registry.spamasaurus.com/proxy/library/redis:alpine
+        image: redis:alpine
         args:
           - redis-server
           - --requirepass authelia

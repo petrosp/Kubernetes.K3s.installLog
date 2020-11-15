@@ -13,6 +13,10 @@ spec:
         - name: longhorn-frontend
           port: 80
           namespace: longhorn-system
+      middlewares:
+        - name: 2fa-authentication@file
+        - name: security-headers@file
+        - name: compression@file
   tls:
     options:
       name: default

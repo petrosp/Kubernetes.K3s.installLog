@@ -1,0 +1,118 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: unifi
+spec:
+  ports:
+    - protocol: TCP
+      name: web
+      port: 8443
+  selector:
+    app: unifi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: unifi-tcp
+spec:
+  type: LoadBalancer
+  ports:
+    - protocol: TCP
+      name: comm
+      port: 8080
+    - protocol: TCP
+      name: bandwidth
+      port: 6789
+    - protocol: TCP
+      name: syslog
+      port: 5514
+  selector:
+    app: unifi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: unifi-udp
+spec:
+  type: LoadBalancer
+  ports:
+    - protocol: UDP
+      name: stun
+      port: 3478
+    - protocol: UDP
+      name: discovery
+      port: 10001
+  selector:
+    app: unifi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: unifi
+  labels:
+    app: unifi
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: unifi
+  template:
+    metadata:
+      labels:
+        app: unifi
+    spec:
+      containers:
+      - name: unifi
+        image: linuxserver/unifi-controller
+        ports:
+          - name: web
+            containerPort: 8443
+          - name: comm
+            containerPort: 8080
+          - name: bandwidth
+            containerPort: 6789
+          - name: syslog
+            containerPort: 5514
+          - name: stun
+            containerPort: 3478
+            protocol: UDP
+          - name: discovery
+            containerPort: 10001
+            protocol: UDP
+        volumeMounts:
+        - mountPath: /config
+          name: longhorn-unifi-config
+      volumes:
+      - name: longhorn-unifi-config
+        persistentVolumeClaim:
+          claimName: longhorn-unifi-config
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: unifi
+spec:
+  entryPoints:
+    - websecure
+  routes:
+  - match: Host(`wifi.spamasaurus.com`)
+    kind: Rule
+    services:
+    - name: unifi
+      port: 8443
+      scheme: https
+#    middlewares:
+#    - name: security-headers@file
+#    - name: compression@file
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: longhorn-unifi-config
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: longhorn
+  resources:
+    requests:
+      storage: 1Gi

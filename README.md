@@ -83,7 +83,7 @@ Expose Longhorn's dashboard through  `IngressRoute`:
 ```
 kubectl apply -f storage/Longhorn/ingressRoute-Longhorn.yml
 ```
-Add additional `storageClass` with backup schedule:
+Add additional `storageClass` with backup schedule:  
 ***After** specifying a NFS backup target (syntax: `nfs://servername:/path/to/share`) through Longhorn's dashboard*
 ```
 kind: StorageClass
@@ -282,6 +282,11 @@ kubectl apply -f services/PVR/deploy-NZBHydra.yml
 ```
 kubectl apply -f services/PVR/deploy-Plex.yml
 ```
+After deploying, Plex server needs to be *claimed* (=assigned to Plex-account):
+```
+kubectl get endpoints Plex -n PVR
+```
+Browse to the respective IP address (http://<nodeipaddress>:32400/web) and follow instructions.
 ###### 4.9.3) [Radarr](https://radarr.video/)    <small>(movie management)</small>
 ```
 kubectl apply -f services/PVR/deploy-Radarr.yml

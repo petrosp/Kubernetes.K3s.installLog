@@ -1,0 +1,115 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: lidarr
+  namespace: pvr
+spec:
+  ports:
+    - protocol: TCP
+      name: web
+      port: 8686
+  selector:
+    app: lidarr
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lidarr
+  namespace: pvr
+  labels:
+    app: lidarr
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: lidarr
+  template:
+    metadata:
+      labels:
+        app: lidarr
+    spec:
+      containers:
+      - name: lidarr
+#        image: registry.spamasaurus.com/proxy/linuxserver/lidarr:nightly
+        image: linuxserver/lidarr:nightly
+        ports:
+          - name: web
+            containerPort: 8686
+        volumeMounts:
+        - mountPath: /config
+          name: flexvolsmb-lidarr-config
+        - mountPath: /songs
+          name: flexvolsmb-pvr-songs
+        - mountPath: /downloads
+          name: smb-pvr-volatile
+          subPath: downloads
+      volumes:
+      - name: flexvolsmb-lidarr-config
+        persistentVolumeClaim:
+          claimName: flexvolsmb-lidarr-config
+      - name: flexvolsmb-pvr-songs
+        persistentVolumeClaim:
+          claimName: flexvolsmb-pvr-songs
+      - name: smb-pvr-volatile
+        persistentVolumeClaim:
+          claimName: smb-pvr-volatile
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: lidarr
+  namespace: pvr
+spec:
+  entryPoints:
+    - websecure
+  routes:
+  - match: Host(`songs.pvr.spamasaurus.com`)
+    kind: Rule
+    services:
+    - name: lidarr
+      port: 8686
+    middlewares:
+      - name: 2fa-authentication@file
+      - name: security-headers@file
+      - name: compression@file
+  tls:
+    options:
+      name: defaults@file
+    certResolver: default
+    domains:
+    - main: '*.pvr.spamasaurus.com'
+      sans:
+        - 'pvr.spamasaurus.com'
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: flexvolsmb-lidarr-config
+  namespace: pvr
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteMany
+  storageClassName: flexvolsmb-lidarr-config
+  flexVolume:
+    driver: mount/smb
+    secretRef:
+      name: smb-secret
+    options:
+      opts: domain=bessems.eu,file_mode=0777,dir_mode=0777,iocharset=utf8,nobrl
+      server: 192.168.11.225
+      share: /K3s.Volumes/lidarr/config
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: flexvolsmb-lidarr-config
+  namespace: pvr
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: flexvolsmb-lidarr-config
+  resources:
+    requests:
+      storage: 1Gi

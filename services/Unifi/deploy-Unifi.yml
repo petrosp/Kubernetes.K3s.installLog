@@ -2,6 +2,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: unifi
+  namespace: unifi
 spec:
   ports:
     - protocol: TCP
@@ -14,6 +15,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: unifi-tcp
+  namespace: unifi
 spec:
   type: LoadBalancer
   ports:
@@ -33,6 +35,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: unifi-udp
+  namespace: unifi
 spec:
   type: LoadBalancer
   ports:
@@ -49,6 +52,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: unifi
+  namespace: unifi
   labels:
     app: unifi
 spec:
@@ -99,6 +103,7 @@ spec:
     kind: Rule
     services:
     - name: unifi
+      namespace: unifi
       port: 8443
       scheme: https
 #    middlewares:
@@ -109,6 +114,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: longhorn-unifi-config
+  namespace: unifi
 spec:
   accessModes:
     - ReadWriteOnce

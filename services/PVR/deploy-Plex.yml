@@ -45,6 +45,8 @@ spec:
           name: flexvolsmb-pvr-series
         - mountPath: /data/movies
           name: flexvolsmb-pvr-movies
+        - mountPath: /transcode
+          name: emptydir-plex-transcode
       volumes:
       - name: longhorn-plex-config
         persistentVolumeClaim:
@@ -55,6 +57,9 @@ spec:
       - name: flexvolsmb-pvr-movies
         persistentVolumeClaim:
           claimName: flexvolsmb-pvr-movies
+      - name: emptydir-plex-transcode
+        emptyDir:
+          medium: Memory
 ---
 apiVersion: traefik.containo.us/v1alpha1
 kind: IngressRoute

@@ -246,17 +246,10 @@ kubectl exec -i guacamole-<pod-id> --container mysql -- mysql -uguacamole -pguac
 kubectl rollout restart deployment guacamole
 ```
 ##### 4.7) [Harbor](https://goharbor.io/)    <small>(container image registry)</small>
-Create `ingressRoute` and `storageClass`
+*Running externally; refer to [Ansible.Harbor](https://code.spamasaurus.com/djpbessems/Ansible.Harbor/src/branch/master)-repository for actual setup*
+Create `Endpoint`, `service` and `ingressRoute`
 ```
-kubectl create namespace harbor
 kubectl apply -f services/Harbor/ingressRoute-Harbor.yml
-kubectl apply -f services/Harbor/storageClass-Harbor.yml
-```
-Install Helm chart
-```
-helm repo add harbor https://helm.goharbor.io
-helm repo update
-helm install harbor harbor/harbor --namespace harbor --values=services/Harbor/chart-values.yml
 ```
 
 ##### 4.8) [Lighttpd](https://www.lighttpd.net/)    <small>(webserver)</small>

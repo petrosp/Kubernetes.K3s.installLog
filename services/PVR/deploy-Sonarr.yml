@@ -30,7 +30,7 @@ spec:
     spec:
       containers:
       - name: sonarr
-        image: linuxserver/sonarr:preview
+        image: registry.spamasaurus.com/proxy/linuxserver/sonarr:preview
         ports:
           - name: web
             containerPort: 8989

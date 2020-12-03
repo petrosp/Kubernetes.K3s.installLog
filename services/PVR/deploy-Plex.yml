@@ -31,7 +31,7 @@ spec:
       hostNetwork: true
       containers:
       - name: plex
-        image: linuxserver/plex
+        image: registry.spamasaurus.com/proxy/linuxserver/plex
         ports:
           - name: web
             containerPort: 32400

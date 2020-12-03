@@ -28,7 +28,7 @@ spec:
     spec:
       containers:
       - name: gotify
-        image: gotify/server
+        image: registry.spamasaurus.com/proxy/gotify/server
         ports:
           - name: web
             containerPort: 80

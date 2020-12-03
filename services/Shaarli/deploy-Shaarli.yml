@@ -28,7 +28,7 @@ spec:
     spec:
       containers:
       - name: shaarli
-        image: shaarli/shaarli
+        image: registry.spamasaurus.com/proxy/shaarli/shaarli
         ports:
           - name: web
             containerPort: 80

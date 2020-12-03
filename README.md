@@ -246,7 +246,7 @@ kubectl exec -i guacamole-<pod-id> --container mysql -- mysql -uguacamole -pguac
 kubectl rollout restart deployment guacamole
 ```
 ##### 4.7) [Harbor](https://goharbor.io/)    <small>(container image registry)</small>
-*Running externally; refer to [Ansible.Harbor](https://code.spamasaurus.com/djpbessems/Ansible.Harbor/src/branch/master)-repository for actual setup*
+*Running externally; refer to [Ansible.Harbor](https://code.spamasaurus.com/djpbessems/Ansible.Harbor/src/branch/master)-repository for actual setup*  
 Create `Endpoint`, `service` and `ingressRoute`
 ```
 kubectl apply -f services/Harbor/ingressRoute-Harbor.yml

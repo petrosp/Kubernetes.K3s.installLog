@@ -39,7 +39,7 @@ spec:
       serviceAccountName: drone
       containers:
       - name: drone
-        image: drone/drone:latest
+        image: bv11-cr01.bessems.eu/proxy/drone/drone:latest
         command: ["sh", "-c", ". /vault/secrets/drone && /bin/drone-server"]
         env:
         - name: DRONE_SERVER_PROTO
@@ -58,6 +58,8 @@ spec:
           value: 'false'
         - name: DRONE_AGENTS_ENABLED
           value: 'true'
+        - name: DRONE_USER_CREATE
+          value: 'username:djpbessems,admin:true'
         ports:
           - name: ui
             containerPort: 80
@@ -65,7 +67,7 @@ spec:
         - mountPath: /data
           name: flexvolsmb-drone-data
       - name: drone-runner
-        image: drone/drone-runner-kube:latest
+        image: bv11-cr01.bessems.eu/proxy/drone/drone-runner-kube:latest
         command: ["sh", "-c", ". /vault/secrets/drone && /bin/drone-runner-kube"]
         ports:
         - containerPort: 3000
@@ -131,6 +133,38 @@ spec:
   accessModes:
     - ReadWriteMany
   storageClassName: flexvolsmb-drone-data
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: flexvolsmb-drone-certs
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteMany
+  storageClassName: flexvolsmb-drone-certs
+  flexVolume:
+    driver: mount/smb
+    secretRef:
+      name: smb-secret
+    options:
+      opts: domain=bessems.eu,file_mode=0777,dir_mode=0777,iocharset=utf8,nobrl
+      server: 192.168.11.225
+      share: /K3s.Volumes/traefikcertsdumper/export
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: flexvolsmb-drone-certs
+  namespace: default
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: flexvolsmb-drone-certs
   resources:
     requests:
       storage: 1Gi

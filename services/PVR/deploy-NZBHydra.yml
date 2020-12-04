@@ -30,7 +30,7 @@ spec:
     spec:
       containers:
       - name: nzbhydra
-        image: registry.spamasaurus.com/proxy/linuxserver/nzbhydra2
+        image: bv11-cr01.bessems.eu/proxy/linuxserver/nzbhydra2
         ports:
           - name: web
             containerPort: 5076

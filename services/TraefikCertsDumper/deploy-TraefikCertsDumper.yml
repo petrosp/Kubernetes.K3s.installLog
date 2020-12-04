@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: traefik-certs-dumper
-        image: registry.spamasaurus.com/proxy/ldez/traefik-certs-dumper:latest-amd64
+        image: bv11-cr01.bessems.eu/proxy/ldez/traefik-certs-dumper:latest-amd64
         command: ['traefik-certs-dumper', 'file']
         args: 
         - --watch

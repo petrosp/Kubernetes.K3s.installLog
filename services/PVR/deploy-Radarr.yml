@@ -30,7 +30,7 @@ spec:
     spec:
       containers:
       - name: radarr
-        image: registry.spamasaurus.com/proxy/linuxserver/radarr:nightly
+        image: bv11-cr01.bessems.eu/proxy/linuxserver/radarr:nightly
         ports:
           - name: web
             containerPort: 7878

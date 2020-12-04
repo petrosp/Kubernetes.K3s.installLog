@@ -245,32 +245,26 @@ kubectl exec -i guacamole-<pod-id> --container guacamole -- /opt/guacamole/bin/i
 kubectl exec -i guacamole-<pod-id> --container mysql -- mysql -uguacamole -pguacamole guacamole < initdb.sql
 kubectl rollout restart deployment guacamole
 ```
-##### 4.7) [Harbor](https://goharbor.io/)    <small>(container image registry)</small>
-*Running externally; refer to [Ansible.Harbor](https://code.spamasaurus.com/djpbessems/Ansible.Harbor/src/branch/master)-repository for actual setup*  
-Create `Endpoint`, `service` and `ingressRoute`
-```
-kubectl apply -f services/Harbor/ingressRoute-Harbor.yml
-```
 
-##### 4.8) [Lighttpd](https://www.lighttpd.net/)    <small>(webserver)</small>
+##### 4.7) [Lighttpd](https://www.lighttpd.net/)    <small>(webserver)</small>
 *Serves various semi-containerized websites; respective webcontent is stored on fileshare*  
 ```
 kubectl apply -f services/Lighttpd/configMap-Lighttpd.yml
 kubectl apply -f services/Lighttpd/deploy-Lighttpd.yml
 kubectl apply -f services/Lighttpd/cronJob-Spotweb.yml
 ```
-##### 4.9) PVR `namespace`    <small>(automated media management)</small>
+##### 4.8) PVR `namespace`    <small>(automated media management)</small>
 *Containers use shared resources to be able to interact with downloaded files*
 ```
 kubectl create secret generic --type=mount/smb smb-secret --from-literal=username=<<omitted>> --from-literal=password=<<omitted>> -n pvr
 kubectl apply -f services/PVR/persistentVolumeClaim-PVR.yml
 kubectl apply -f services/PVR/storageClass-PVR.yml
 ```
-###### 4.9.1) [NZBHydra](https://github.com/theotherp/nzbhydra2)    <small>(index aggregator)</small>
+###### 4.8.1) [NZBHydra](https://github.com/theotherp/nzbhydra2)    <small>(index aggregator)</small>
 ```
 kubectl apply -f services/PVR/deploy-NZBHydra.yml
 ```
-###### 4.9.2) [Plex](https://www.plex.tv/)    <small>(media library)</small>
+###### 4.8.2) [Plex](https://www.plex.tv/)    <small>(media library)</small>
 *Due to usage of symlinks, partially incompatible with SMB-share-backed storage*
 ```
 kubectl apply -f services/PVR/deploy-Plex.yml
@@ -280,32 +274,32 @@ After deploying, Plex server needs to be *claimed* (=assigned to Plex-account):
 kubectl get endpoints Plex -n PVR
 ```
 Browse to the respective IP address (http://<nodeipaddress>:32400/web) and follow instructions.
-###### 4.9.3) [Radarr](https://radarr.video/)    <small>(movie management)</small>
+###### 4.8.3) [Radarr](https://radarr.video/)    <small>(movie management)</small>
 ```
 kubectl apply -f services/PVR/deploy-Radarr.yml
 ```
-###### 4.9.4) [Readarr](https://readarr.com/)    <small>(book management)</small>
+###### 4.8.4) [Readarr](https://readarr.com/)    <small>(book management)</small>
 ```
 kubectl apply -f services/PVR/deploy-Readarr.yml
 ```
-###### 4.9.5) [SABnzbd](https://sabnzbd.org/)    <small>(download client)</small>
+###### 4.8.5) [SABnzbd](https://sabnzbd.org/)    <small>(download client)</small>
 ```
 kubectl apply -f services/PVR/deploy-SABnzbd.yml
 ```
-###### 4.9.6) [Sonarr](https://sonarr.tv/)    <small>(tv management)</small>
+###### 4.8.6) [Sonarr](https://sonarr.tv/)    <small>(tv management)</small>
 ```
 kubectl apply -f services/PVR/deploy-Sonarr.yml
 ```
 
-##### 4.10) [Shaarli](https://github.com/shaarli/Shaarli)    <small>(bookmarks/notes)</small>
+##### 4.9) [Shaarli](https://github.com/shaarli/Shaarli)    <small>(bookmarks/notes)</small>
 ```
 kubectl apply -f services/Shaarli/deploy-Shaarli.yml
 ```
-##### 4.11) [Theia](https://theia-ide.org/)    <small>(web IDE)</small>
+##### 4.10) [Theia](https://theia-ide.org/)    <small>(web IDE)</small>
 ```
 kubectl apply -f services/Theia/deploy-Theia.yml
 ```
-##### 4.12) [Traefik-Certs-Dumper](https://github.com/ldez/traefik-certs-dumper)    <small>(certificate tooling)</small>
+##### 4.11) [Traefik-Certs-Dumper](https://github.com/ldez/traefik-certs-dumper)    <small>(certificate tooling)</small>
 ```
 kubectl apply -f services/TraefikCertsDumper/deploy-TraefikCertsDumper.yml
 ```

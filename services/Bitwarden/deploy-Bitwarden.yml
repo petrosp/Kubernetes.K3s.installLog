@@ -42,7 +42,7 @@ spec:
       serviceAccountName: bitwarden
       containers:
       - name: bitwarden
-        image: bitwardenrs/server
+        image: bv11-cr01.bessems.eu/proxy/bitwardenrs/server
         args: ["sh", "-c", ". /vault/secrets/bitwarden && /start.sh"]
         env:
         - name: ENABLE_DB_WAL

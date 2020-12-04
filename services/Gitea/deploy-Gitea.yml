@@ -28,7 +28,7 @@ spec:
     spec:
       containers:
       - name: gitea
-        image: registry.spamasaurus.com/proxy/gitea/gitea:1
+        image: bv11-cr01.bessems.eu/proxy/gitea/gitea:1
         env:
         - name: DB_TYPE
           value: 'sqlite3'

@@ -67,7 +67,7 @@ spec:
     spec:
       containers:
       - name: unifi
-        image: linuxserver/unifi-controller
+        image: bv11-cr01.bessems.eu/proxy/linuxserver/unifi-controller
         ports:
           - name: web
             containerPort: 8443

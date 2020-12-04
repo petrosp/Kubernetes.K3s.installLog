@@ -28,7 +28,7 @@ spec:
     spec:
       containers:
       - name: lighttpd-php-pwsh
-        image: registry.spamasaurus.com/library/lighttpd-php-powershell
+        image: bv11-cr01.bessems.eu/library/lighttpd-php-powershell
         ports:
           - name: web
             containerPort: 8080

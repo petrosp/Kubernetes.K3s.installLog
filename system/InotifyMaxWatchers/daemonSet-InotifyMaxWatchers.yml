@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: inotify-max-watchers
-          image: alpine
+          image: bv11-cr01.bessems.eu/proxy/library/alpine
           imagePullPolicy: Always
           securityContext:
             privileged: true

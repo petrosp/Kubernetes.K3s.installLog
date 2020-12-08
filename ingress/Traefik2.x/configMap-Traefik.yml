@@ -25,6 +25,7 @@ data:
               - main: '*.spamasaurus.com'
                 sans:
                   - 'spamasaurus.com'
+              - main: '*.chat.spamasaurus.com'
               - main: '*.bessems.com'
                 sans:
                   - 'bessems.com'

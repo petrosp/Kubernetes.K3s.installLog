@@ -56,6 +56,9 @@ data:
 
       index-file.names += ("spamasaurusRex.login.php")
     }
+    $HTTP["url"] =~ "^/.well-known/" {
+      mimetype.assign   += ( "server" => "application/json" )
+    }
   sw.itch.fyi.conf: |
     $HTTP["host"] == "sw.itch.fyi" {
       server.document-root = "/var/www/sw.itch.fyi/"

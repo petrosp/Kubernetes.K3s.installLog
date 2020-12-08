@@ -1,0 +1,18 @@
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: matrix-cors-headers
+spec:
+  headers:
+    accessControlAllowHeaders:
+      - "Authorization"
+      - "Content-Type"
+    accessControlAllowMethods:
+      - "GET"
+      - "OPTIONS"
+      - "PUT"
+    accessControlAllowOriginList:
+      - "https://chat.spamasaurus.com"
+      - "https://synapse.chat.spamasaurus.com"
+    accessControlMaxAge: 100
+    addVaryHeader: true

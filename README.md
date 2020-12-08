@@ -101,8 +101,8 @@ parameters:
 Then make this the new default `storageClass`:
 ```
 kubectl patch storageclass longhorn-dailybackup -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
-kubectl patch storageclass local-path -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"false"}}}'
-kubectl delete storageclass longhorn
+#kubectl patch storageclass local-path -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"false"}}}'
+#kubectl delete storageclass longhorn
 ```
 
 ### 2) Ingress Controller
@@ -253,6 +253,13 @@ kubectl apply -f services/Lighttpd/configMap-Lighttpd.yml
 kubectl apply -f services/Lighttpd/deploy-Lighttpd.yml
 kubectl apply -f services/Lighttpd/cronJob-Spotweb.yml
 ```
+##### 4.8) [Matrix]()    <small>(federated chat)</small>
+*WIP*
+```
+kubectl apply -f services/Matrix/configMap-Matrix.yml
+kubectl apply -f services/Matrix/middleware-Matrix.yml
+kubectl apply -f services/Matrix/deploy-Matrix.yml
+```
 ##### 4.8) PVR `namespace`    <small>(automated media management)</small>
 *Containers use shared resources to be able to interact with downloaded files*
 ```
@@ -302,6 +309,21 @@ kubectl apply -f services/Theia/deploy-Theia.yml
 ##### 4.11) [Traefik-Certs-Dumper](https://github.com/ldez/traefik-certs-dumper)    <small>(certificate tooling)</small>
 ```
 kubectl apply -f services/TraefikCertsDumper/deploy-TraefikCertsDumper.yml
+```
+##### 4.12) [Unifi-Controller]()    <small>(wlan AP management)</small>
+```
+kubectl apply -f services/Unifi/deploy-Unifi.yml
+```
+*Change STUN port to non-default:*
+```
+kubectl exec --namespace unifi -it unifi-<uuid> -- /bin/bash
+sed -e 's/# unifi.stun.port=3478/unifi.stun.port=3479/' -i /data/system.properties
+exit
+kubectl rollout restart deployment --namespace unifi unifi
+```
+*Update STUN url on devices:*    <small>doesn't seem to work</small>
+ssh <username>@<ipaddress>
+sed -e 's|stun://<ipaddress>|stun://<ipaddress>:3479|' -i /etc/persistent/cfg/mgmt
 ```
 ### 5) Miscellaneous
 *Various notes/useful links*  

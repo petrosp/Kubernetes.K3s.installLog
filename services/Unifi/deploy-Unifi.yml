@@ -41,7 +41,7 @@ spec:
   ports:
     - protocol: UDP
       name: stun
-      port: 3478
+      port: 3479
     - protocol: UDP
       name: discovery
       port: 10001
@@ -60,6 +60,8 @@ spec:
   selector:
     matchLabels:
       app: unifi
+  strategy:
+    type: Recreate
   template:
     metadata:
       labels:
@@ -78,7 +80,7 @@ spec:
           - name: syslog
             containerPort: 5514
           - name: stun
-            containerPort: 3478
+            containerPort: 3479
             protocol: UDP
           - name: discovery
             containerPort: 10001

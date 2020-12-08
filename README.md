@@ -9,7 +9,7 @@
 ## K3s cluster 
 On first node:
 ```  
-curl -sfL https://get.k3s.io | sh -s - --no-deploy traefik
+curl -sfL https://get.k3s.io | sh -s - --disable local-path,traefik
 cat /var/lib/rancher/k3s/server/token
 kubectl config view --raw
 ```

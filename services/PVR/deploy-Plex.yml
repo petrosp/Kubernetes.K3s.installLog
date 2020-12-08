@@ -23,6 +23,8 @@ spec:
   selector:
     matchLabels:
       app: plex
+  strategy:
+    type: Recreate
   template:
     metadata:
       labels:

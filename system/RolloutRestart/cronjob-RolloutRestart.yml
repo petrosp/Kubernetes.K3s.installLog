@@ -18,8 +18,36 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: kubectl-rolloutrestart
+  name: kubectl-rolloutrestart-default
   namespace: default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: kubectl-rolloutrestart
+subjects:
+  - kind: ServiceAccount
+    name: kubectl-rolloutrestart
+    namespace: default
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: kubectl-rolloutrestart-unifi
+  namespace: unifi
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: kubectl-rolloutrestart
+subjects:
+  - kind: ServiceAccount
+    name: kubectl-rolloutrestart
+    namespace: default
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: kubectl-rolloutrestart-pvr
+  namespace: pvr
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
@@ -51,6 +79,9 @@ spec:
             - name: kubectl
               image: bv11-cr01.bessems.eu/proxy/bitnami/kubectl
               command:
-                - 'bash'
+                - '/bin/bash'
                 - '-c'
-                - 'for deploy in `kubectl get deployments | cut -d " " -f 1`; do kubectl rollout restart deployment $deploy; done'
+              args: 
+                - for deploy in `kubectl get deployments -n default | cut -d " " -f 1`; do kubectl rollout restart deployment -n default $deploy; done;
+                  for deploy in `kubectl get deployments -n unifi | cut -d " " -f 1`; do kubectl rollout restart deployment -n unifi $deploy; done;
+                  for deploy in `kubectl get deployments -n pvr | cut -d " " -f 1`; do kubectl rollout restart deployment -n pvr $deploy; done;

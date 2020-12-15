@@ -115,7 +115,7 @@ spec:
     options:
       opts: domain=bessems.eu,file_mode=0777,dir_mode=0777,iocharset=utf8,cache=none
       server: 192.168.11.225
-      share: /Public/Audio/temp
+      share: /Public/Audio/DeSchakel
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim

@@ -45,6 +45,8 @@ spec:
           name: longhorn-plex-config
         - mountPath: /data/series
           name: flexvolsmb-pvr-series
+        - mountPath: /data/songs
+          name: flexvolsmb-pvr-songs
         - mountPath: /data/movies
           name: flexvolsmb-pvr-movies
         - mountPath: /transcode
@@ -56,6 +58,9 @@ spec:
       - name: flexvolsmb-pvr-series
         persistentVolumeClaim:
           claimName: flexvolsmb-pvr-series
+      - name: flexvolsmb-pvr-songs
+        persistentVolumeClaim:
+          claimName: flexvolsmb-pvr-songs
       - name: flexvolsmb-pvr-movies
         persistentVolumeClaim:
           claimName: flexvolsmb-pvr-movies
@@ -100,4 +105,4 @@ spec:
   storageClassName: longhorn
   resources:
     requests:
-      storage: 1Gi
+      storage: 5Gi

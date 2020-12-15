@@ -5,6 +5,23 @@
 
 # Kubernetes.K3s.installLog
 *3 VM's provisioned with Ubuntu Server 18.04*
+<details><summary>additional lvm configuration</summary>
+
+```code
+pvdisplay
+pvcreate /dev/sdb
+vgdisplay
+vgcreate longhorn-vg /dev/sdb
+lvdisplay
+lvcreate -l 100%FREE -n longhorn-lv longhorn-vg
+ls /dev/mapper
+mkfs.ext4 /dev/mapper/longhorn--vg-longhorn--lv
+#! add "UUID=<uuid> /mnt/blockstorage ext4 defaults 0 0" to /etc/fstab
+mkdir /mnt/blockstorage
+mount -a
+```
+
+</details>
 
 ## K3s cluster 
 On first node:

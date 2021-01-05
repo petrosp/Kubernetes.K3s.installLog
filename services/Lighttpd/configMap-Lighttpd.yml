@@ -7,6 +7,8 @@ data:
     server.modules = (
         "mod_access",
         "mod_alias",
+        "mod_auth",
+        "mod_authn_file",
         "mod_compress",
         "mod_redirect",
         "mod_rewrite",
@@ -20,6 +22,9 @@ data:
     server.groupname            = "www-data"
     server.port                 = 8080
 
+    auth.backend = "plain"
+    auth.backend.plain.userfile = "/etc/lighttpd/.htpasswd"
+
     index-file.names            = ( "index.php", "index.html", "index.lighttpd.html" )
     url.access-deny             = ( "~", ".inc" )
     static-file.exclude-extensions = ( ".php", ".pl", ".fcgi" )
@@ -30,6 +35,8 @@ data:
     include_shell "/usr/share/lighttpd/create-mime.assign.pl"
     include_shell "/usr/share/lighttpd/include-conf-enabled.pl"
     include_shell "cat /etc/lighttpd/vhosts.d/*.conf"
+  .htpasswd: |
+    readaccess:7eds8PvDwgkWvFZRnyKpTUDTzgi87mh4
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -49,6 +56,15 @@ data:
       server.document-root = "/var/www/sn.itch.fyi/"
 
       index-file.names += ("/_h5ai/public/index.php")
+    }
+    $HTTP["url"] =~ "^/repository|^/Repository" {
+      auth.require = (
+        "" => (
+          "method"  => "basic",
+          "realm"   => "Restricted access",
+          "require" => "user=readaccess"
+        )
+      )
     }
   spamasaurus.com.conf: |
     $HTTP["host"] == "spamasaurus.com" {

@@ -354,3 +354,16 @@ sed -e 's|stun://<ipaddress>|stun://<ipaddress>:3479|' -i /etc/persistent/cfg/mg
 
       
       kubectl apply -f system/InotifyMaxWatchers/daemonSet-InotifyMaxWatchers.yml
+* Debug DNS lookups within the cluster:
+
+      
+      kubectl run -it --rm dnsutils --restart=Never --image=gcr.io/kubernetes-e2e-test-images/dnsutils -- nslookup [-debug] [fqdn]
+  or
+      
+      kubectl run -it --rm busybox --restart=Never --image=busybox:1.28 -- nslookup api.github.com [-debug] [fqdn]
+* Delete namespaces stuck in `Terminating` state:
+
+      
+      kubectl get namespace <name> -o json | jq -j '.spec.finalizers=null' > tmp.json
+      kubectl replace --raw "/api/v1/namespaces/<name>/finalize" -f ./tmp.json
+      rm ./tmp.json

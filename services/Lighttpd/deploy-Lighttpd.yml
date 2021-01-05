@@ -36,6 +36,9 @@ spec:
         - name: configmap-lighttpd-conf
           mountPath: /etc/lighttpd/lighttpd.conf
           subPath: lighttpd.conf
+        - name: configmap-lighttpd-conf
+          mountPath: /etc/lighttpd/.htpasswd
+          subPath: .htpasswd
         - name: configmap-lighttpd-vhosts
           mountPath: /etc/lighttpd/vhosts.d
         - name: flexvolsmb-lighttpd-data

@@ -1,6 +1,6 @@
 image:
   name: bv11-cr01.bessems.eu/proxy/library/traefik
-#  tag: 2.3.2
+  tag: 2.3.7
 
 ports:
   rtmp:

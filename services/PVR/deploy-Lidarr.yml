@@ -30,8 +30,7 @@ spec:
     spec:
       containers:
       - name: lidarr
-#        image: registry.spamasaurus.com/proxy/linuxserver/lidarr:nightly
-        image: linuxserver/lidarr:nightly
+        image: bv11-cr01.bessems.eu/proxy/linuxserver/lidarr:nightly
         ports:
           - name: web
             containerPort: 8686
@@ -40,13 +39,37 @@ spec:
           name: flexvolsmb-lidarr-config
         - mountPath: /songs
           name: flexvolsmb-pvr-songs
-        - mountPath: /downloads
+        - mountPath: /downloads-amd
+          name: smb-pvr-volatile
+          subPath: downloads
+      - name: amd
+        image: bv11-cr01.bessems.eu/library/automatedmusicdownloader
+        env:
+        - name: AUTOSTART
+          value: 'true'
+        - name: FORMAT
+          value: MP3
+        - name: BITRATE
+          value: '320'
+        - name: LidarrUrl
+          value: http://lidarr.pvr.svc.cluster.local:8686
+        - name: LidarrAPIkey
+          value: 1e11c5d649ab4c70b3f91792bc91821b
+        - name: ARL_TOKEN
+          value: f173fa3b790a1fe0f7c89f2ed99efefc64e66ddb2f9e9cc397b780bdd567d256788039f1c27c5e1dd59511d93e721b3d84fa90767aafb77ed619fb05dd9123e4fd3cdaaefb5f237b1aedcec595f65eb419ee55a5df82ce3d3e658bbbb624e21e
+        volumeMounts:
+        - mountPath: /config
+          name: flexvolsmb-lidarr-amd
+        - mountPath: /downloads-amd
           name: smb-pvr-volatile
           subPath: downloads
       volumes:
       - name: flexvolsmb-lidarr-config
         persistentVolumeClaim:
           claimName: flexvolsmb-lidarr-config
+      - name: flexvolsmb-lidarr-amd
+        persistentVolumeClaim:
+          claimName: flexvolsmb-lidarr-amd
       - name: flexvolsmb-pvr-songs
         persistentVolumeClaim:
           claimName: flexvolsmb-pvr-songs
@@ -110,6 +133,39 @@ spec:
   accessModes:
     - ReadWriteMany
   storageClassName: flexvolsmb-lidarr-config
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: flexvolsmb-lidarr-amd
+  namespace: pvr
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteMany
+  storageClassName: flexvolsmb-lidarr-amd
+  flexVolume:
+    driver: mount/smb
+    secretRef:
+      name: smb-secret
+    options:
+      opts: domain=bessems.eu,file_mode=0666,dir_mode=0766,uid=911,gid=911,iocharset=utf8
+      server: 192.168.11.225
+      share: /K3s.Volumes/lidarr/amd
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: flexvolsmb-lidarr-amd
+  namespace: pvr
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: flexvolsmb-lidarr-amd
   resources:
     requests:
       storage: 1Gi

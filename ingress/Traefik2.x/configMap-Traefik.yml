@@ -32,6 +32,11 @@ data:
               - main: '*.bessems.eu'
                 sans:
                   - 'bessems.eu'
+              - main: 'bv11-vc01.intra.bessems.eu'
+                sans:
+                  - 'bv11-gw01.intra.bessems.eu'
+                  - 'bv11-vpn.intra.bessems.eu'
+                  - 'bv11-esx.intra.bessems.eu'
               - main: '*.gabaldon.eu'
                 sans:
                   - 'gabaldon.eu'

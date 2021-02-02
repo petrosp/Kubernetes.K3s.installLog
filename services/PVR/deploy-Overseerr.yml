@@ -1,0 +1,103 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: overseerr
+  namespace: pvr
+spec:
+  ports:
+    - protocol: TCP
+      name: web
+      port: 5055
+  selector:
+    app: overseerr
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: overseerr
+  namespace: pvr
+  labels:
+    app: overseerr
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: overseerr
+  template:
+    metadata:
+      labels:
+        app: overseerr
+    spec:
+      containers:
+      - name: overseerr
+        image: bv11-cr01.bessems.eu/proxy/sctx/overseerr
+        ports:
+          - name: web
+            containerPort: 5055
+        volumeMounts:
+        - mountPath: /app/config
+          name: flexvolsmb-overseerr-config
+      volumes:
+      - name: flexvolsmb-overseerr-config
+        persistentVolumeClaim:
+          claimName: flexvolsmb-overseerr-config
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: overseerr
+  namespace: pvr
+spec:
+  entryPoints:
+    - websecure
+  routes:
+  - match: Host(`requests.pvr.spamasaurus.com`)
+    kind: Rule
+    services:
+    - name: overseerr
+      port: 5055
+    middlewares:
+      - name: 2fa-authentication@file
+      - name: security-headers@file
+      - name: compression@file
+  tls:
+    options:
+      name: defaults@file
+    certResolver: default
+    domains:
+    - main: '*.pvr.spamasaurus.com'
+      sans:
+        - 'pvr.spamasaurus.com'
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: flexvolsmb-overseerr-config
+  namespace: pvr
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteMany
+  storageClassName: flexvolsmb-overseerr-config
+  flexVolume:
+    driver: mount/smb
+    secretRef:
+      name: smb-secret
+    options:
+      opts: domain=bessems.eu,file_mode=0777,dir_mode=0777,iocharset=utf8,nobrl
+      server: 192.168.11.225
+      share: /K3s.Volumes/overseerr/config
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: flexvolsmb-overseerr-config
+  namespace: pvr
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: flexvolsmb-overseerr-config
+  resources:
+    requests:
+      storage: 1Gi

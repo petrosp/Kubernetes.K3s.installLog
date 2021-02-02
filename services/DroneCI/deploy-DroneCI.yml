@@ -39,7 +39,8 @@ spec:
       serviceAccountName: drone
       containers:
       - name: drone
-        image: bv11-cr01.bessems.eu/proxy/drone/drone:latest
+#        image: bv11-cr01.bessems.eu/proxy/drone/drone:latest
+        image: drone/drone:latest
         command: ["sh", "-c", ". /vault/secrets/drone && /bin/drone-server"]
         env:
         - name: DRONE_SERVER_PROTO
@@ -67,7 +68,8 @@ spec:
         - mountPath: /data
           name: flexvolsmb-drone-data
       - name: drone-runner
-        image: bv11-cr01.bessems.eu/proxy/drone/drone-runner-kube:latest
+#        image: bv11-cr01.bessems.eu/proxy/drone/drone-runner-kube:latest
+        image: drone/drone-runner-kube:latest
         command: ["sh", "-c", ". /vault/secrets/drone && /bin/drone-runner-kube"]
         ports:
         - containerPort: 3000
@@ -76,6 +78,10 @@ spec:
           value: 'ci.spamasaurus.com'
         - name: DRONE_RPC_PROTO
           value: 'https'
+        - name: DRONE_RUNNER_CAPACITY
+          value: '2'
+        - name: DRONE_RUNNER_MAX_PROCS
+          value: '3'
       volumes:
       - name: flexvolsmb-drone-output
         persistentVolumeClaim:
@@ -143,10 +149,42 @@ spec:
 apiVersion: v1
 kind: PersistentVolume
 metadata:
+  name: flexvolsmb-drone-certs
+spec:
+  capacity:
+    storage: 100Gi
+  accessModes:
+    - ReadWriteMany
+  storageClassName: flexvolsmb-drone-certs
+  flexVolume:
+    driver: mount/smb
+    secretRef:
+      name: smb-secret
+    options:
+      opts: domain=bessems.eu,file_mode=0777,dir_mode=0777,iocharset=utf8
+      server: 192.168.11.225
+      share: /K3s.Volumes/traefikcertsdumper/export
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: flexvolsmb-drone-certs
+  namespace: default
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: flexvolsmb-drone-certs
+  resources:
+    requests:
+      storage: 100Gi
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
   name: flexvolsmb-drone-output
 spec:
   capacity:
-    storage: 1Gi
+    storage: 100Gi
   accessModes:
     - ReadWriteMany
   storageClassName: flexvolsmb-drone-output
@@ -170,7 +208,7 @@ spec:
   storageClassName: flexvolsmb-drone-output
   resources:
     requests:
-      storage: 1Gi
+      storage: 100Gi
 ---
 kind: Role
 apiVersion: rbac.authorization.k8s.io/v1

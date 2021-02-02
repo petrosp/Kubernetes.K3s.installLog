@@ -1,0 +1,79 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: tfstate
+spec:
+  ports:
+    - protocol: TCP
+      name: db
+      port: 5432
+  selector:
+    app: tfstate
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tfstate
+  labels:
+    app: tfstate
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tfstate
+  template:
+    metadata:
+      labels:
+        app: tfstate
+    spec:
+      containers:
+      - name: postgres
+        image: bv11-cr01.bessems.eu/proxy/library/postgres:alpine
+        env:
+        - name: POSTGRES_USER
+          value: terraform
+        - name: POSTGRES_PASSWORD
+          value: terraform
+        - name: POSTGRES_DB
+          value: terraform_backend
+        ports:
+          - name: db
+            containerPort: 5432
+        volumeMounts:
+        - mountPath: /var/lib/postgresql/data
+          name: flexvolsmb-tfstate-db
+      volumes:
+      - name: flexvolsmb-tfstate-db
+        persistentVolumeClaim:
+          claimName: flexvolsmb-tfstate-db
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: flexvolsmb-tfstate-db
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteMany
+  storageClassName: flexvolsmb-tfstate-db
+  flexVolume:
+    driver: mount/smb
+    secretRef:
+      name: smb-secret
+    options:
+      opts: domain=bessems.eu,file_mode=0600,dir_mode=0700,uid=70,gid=70,iocharset=utf8,nobrl
+      server: 192.168.11.225
+      share: /K3s.Volumes/tfstate/db
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: flexvolsmb-tfstate-db
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: flexvolsmb-tfstate-db
+  resources:
+    requests:
+      storage: 1Gi

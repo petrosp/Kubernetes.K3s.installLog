@@ -23,8 +23,6 @@ spec:
       app: shaarli
   template:
     metadata:
-      annotations:
-        linkerd.io/inject: enabled
       labels:
         app: shaarli
     spec:

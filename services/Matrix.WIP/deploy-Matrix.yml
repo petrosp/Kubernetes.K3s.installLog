@@ -1,0 +1,370 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: matrix
+  namespace: matrix
+spec:
+  ports:
+    - protocol: TCP
+      name: synapse
+      port: 8008
+    - protocol: TCP
+      name: db
+      port: 5432
+    - protocol: TCP
+      name: element
+      port: 80
+  selector:
+    app: matrix
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: identity
+  namespace: matrix
+spec:
+  ports:
+    - protocol: TCP
+      name: identity
+      port: 8090
+    - protocol: TCP
+      name: db
+      port: 5432
+  selector:
+    app: identity
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: matrix
+  namespace: matrix
+  labels:
+    app: matrix
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: matrix
+  template:
+    metadata:
+      labels:
+        app: matrix
+    spec:
+      containers:
+      - name: synapse
+        image: bv11-cr01.bessems.eu/proxy/matrixdotorg/synapse:latest
+#        args:
+#        - generate
+        env:
+#        - name: SYNAPSE_SERVER_NAME
+#          value: spamasaurus.com
+#        - name: SYNAPSE_REPORT_STATS
+#          value: 'no'
+        - name: SYNAPSE_CONFIG_PATH
+          value: /data/homeserver.yaml
+        ports:
+          - name: synapse
+            containerPort: 8008
+        volumeMounts:
+        - mountPath: /data
+          name: flexvolsmb-matrix-data
+      - name: postgres
+        image: bv11-cr01.bessems.eu/proxy/library/postgres:alpine
+        env:
+        - name: POSTGRES_USER
+          value: synapse
+        - name: POSTGRES_PASSWORD
+          value: synapse
+        - name: POSTGRES_INITDB_ARGS
+          value: --encoding=UTF-8 --lc-collate=C --lc-ctype=C
+        ports:
+          - name: db
+            containerPort: 5432
+        volumeMounts:
+        - mountPath: /var/lib/postgresql/data
+          name: flexvolsmb-matrix-db
+      - name: element
+        image: bv11-cr01.bessems.eu/proxy/vectorim/element-web
+        ports:
+          - name: element
+            containerPort: 80
+        volumeMounts:
+        - name: configmap-matrix-config
+          mountPath: /usr/share/nginx/html/config.json
+          subPath: config.json
+      volumes:
+      - name: flexvolsmb-matrix-data
+        persistentVolumeClaim:
+          claimName: flexvolsmb-matrix-data
+      - name: flexvolsmb-matrix-db
+        persistentVolumeClaim:
+          claimName: flexvolsmb-matrix-db
+      - name: configmap-matrix-config
+        configMap:
+          name: configmap-matrix-config
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: identity
+  namespace: matrix
+  labels:
+    app: identity
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: identity
+  template:
+    metadata:
+      labels:
+        app: identity
+    spec:
+      containers:
+      - name: identity
+        image: bv11-cr01.bessems.eu/library/matrix-identity
+        env:
+        - name: MATRIX_DOMAIN
+          value: chat.spamasaurus.com
+        ports:
+          - name: identity
+            containerPort: 8090
+        volumeMounts:
+        - name: flexvolsmb-identity-etc
+          mountPath: /etc/ma1sd
+        - name: flexvolsmb-identity-var
+          mountPath: /var/ma1sd
+      - name: postgres
+        image: bv11-cr01.bessems.eu/proxy/library/postgres:alpine
+        env:
+        - name: POSTGRES_USER
+          value: identity
+        - name: POSTGRES_PASSWORD
+          value: identity
+        - name: POSTGRES_DATABASE
+          value: identity
+        ports:
+          - name: db
+            containerPort: 5432
+        volumeMounts:
+        - mountPath: /var/lib/postgresql/data
+          name: flexvolsmb-identity-db
+      volumes:
+      - name: flexvolsmb-identity-etc
+        persistentVolumeClaim:
+          claimName: flexvolsmb-identity-etc
+      - name: flexvolsmb-identity-var
+        persistentVolumeClaim:
+          claimName: flexvolsmb-identity-var
+      - name: flexvolsmb-identity-db
+        persistentVolumeClaim:
+          claimName: flexvolsmb-identity-db
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: matrix
+  namespace: matrix
+spec:
+  entryPoints:
+    - websecure
+  routes:
+  - match: Host(`synapse.chat.spamasaurus.com`)
+    kind: Rule
+    services:
+    - name: matrix
+      namespace: matrix
+      port: 8008
+    middlewares:
+    - name: security-headers@file
+    - name: compression@file
+    - name: matrix-cors-headers
+  - match: Host(`chat.spamasaurus.com`)
+    kind: Rule
+    services:
+    - name: matrix
+      namespace: matrix
+      port: 80
+    middlewares:
+    - name: security-headers@file
+    - name: compression@file
+    - name: matrix-cors-headers
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: identity
+  namespace: matrix
+spec:
+  entryPoints:
+    - websecure
+  routes:
+  - match: Host(`synapse.chat.spamasaurus.com`) && Path(`/_matrix/identity`)
+    kind: Rule
+    services:
+    - name: identity
+      namespace: matrix
+      port: 8090
+    middlewares:
+    - name: security-headers@file
+    - name: compression@file
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: flexvolsmb-matrix-data
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteMany
+  storageClassName: flexvolsmb-matrix-data
+  flexVolume:
+    driver: mount/smb
+    secretRef:
+      name: smb-secret
+    options:
+      opts: domain=bessems.eu,file_mode=0777,dir_mode=0777,iocharset=utf8
+      server: 192.168.11.225
+      share: /K3s.Volumes/matrix/synapse.data
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: flexvolsmb-matrix-data
+  namespace: matrix
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: flexvolsmb-matrix-data
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: flexvolsmb-matrix-db
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteMany
+  storageClassName: flexvolsmb-matrix-db
+  flexVolume:
+    driver: mount/smb
+    secretRef:
+      name: smb-secret
+    options:
+      opts: domain=bessems.eu,file_mode=0600,dir_mode=0700,uid=70,gid=70,iocharset=utf8,nobrl
+      server: 192.168.11.225
+      share: /K3s.Volumes/matrix/synapse.db
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: flexvolsmb-matrix-db
+  namespace: matrix
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: flexvolsmb-matrix-db
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: flexvolsmb-identity-etc
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteMany
+  storageClassName: flexvolsmb-identity-etc
+  flexVolume:
+    driver: mount/smb
+    secretRef:
+      name: smb-secret
+    options:
+      opts: domain=bessems.eu,file_mode=0777,dir_mode=0777,iocharset=utf8
+      server: 192.168.11.225
+      share: /K3s.Volumes/matrix/identity.etc
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: flexvolsmb-identity-etc
+  namespace: matrix
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: flexvolsmb-identity-etc
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: flexvolsmb-identity-var
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteMany
+  storageClassName: flexvolsmb-identity-var
+  flexVolume:
+    driver: mount/smb
+    secretRef:
+      name: smb-secret
+    options:
+      opts: domain=bessems.eu,file_mode=0777,dir_mode=0777,iocharset=utf8
+      server: 192.168.11.225
+      share: /K3s.Volumes/matrix/identity.var
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: flexvolsmb-identity-var
+  namespace: matrix
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: flexvolsmb-identity-var
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: flexvolsmb-identity-db
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteMany
+  storageClassName: flexvolsmb-identity-db
+  flexVolume:
+    driver: mount/smb
+    secretRef:
+      name: smb-secret
+    options:
+      opts: domain=bessems.eu,file_mode=0600,dir_mode=0700,uid=70,gid=70,iocharset=utf8,nobrl
+      server: 192.168.11.225
+      share: /K3s.Volumes/matrix/identity.db
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: flexvolsmb-identity-db
+  namespace: matrix
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: flexvolsmb-identity-db
+  resources:
+    requests:
+      storage: 1Gi

@@ -39,7 +39,6 @@ spec:
       serviceAccountName: drone
       containers:
       - name: drone
-#        image: bv11-cr01.bessems.eu/proxy/drone/drone:latest
         image: drone/drone:latest
         command: ["sh", "-c", ". /vault/secrets/drone && /bin/drone-server"]
         env:
@@ -61,6 +60,8 @@ spec:
           value: 'true'
         - name: DRONE_USER_CREATE
           value: 'username:djpbessems,admin:true'
+        - name: DRONE_TMATE_ENABLED
+          value: 'false'
         ports:
           - name: ui
             containerPort: 80
@@ -68,7 +69,6 @@ spec:
         - mountPath: /data
           name: flexvolsmb-drone-data
       - name: drone-runner
-#        image: bv11-cr01.bessems.eu/proxy/drone/drone-runner-kube:latest
         image: drone/drone-runner-kube:latest
         command: ["sh", "-c", ". /vault/secrets/drone && /bin/drone-runner-kube"]
         ports:
@@ -83,9 +83,6 @@ spec:
         - name: DRONE_RUNNER_MAX_PROCS
           value: '3'
       volumes:
-      - name: flexvolsmb-drone-output
-        persistentVolumeClaim:
-          claimName: flexvolsmb-drone-output
       - name: flexvolsmb-drone-data
         persistentVolumeClaim:
           claimName: flexvolsmb-drone-data
@@ -152,7 +149,7 @@ metadata:
   name: flexvolsmb-drone-certs
 spec:
   capacity:
-    storage: 100Gi
+    storage: 10Gi
   accessModes:
     - ReadWriteMany
   storageClassName: flexvolsmb-drone-certs
@@ -176,7 +173,7 @@ spec:
   storageClassName: flexvolsmb-drone-certs
   resources:
     requests:
-      storage: 100Gi
+      storage: 10Gi
 ---
 apiVersion: v1
 kind: PersistentVolume
@@ -184,7 +181,7 @@ metadata:
   name: flexvolsmb-drone-output
 spec:
   capacity:
-    storage: 100Gi
+    storage: 10Gi
   accessModes:
     - ReadWriteMany
   storageClassName: flexvolsmb-drone-output
@@ -208,7 +205,39 @@ spec:
   storageClassName: flexvolsmb-drone-output
   resources:
     requests:
-      storage: 100Gi
+      storage: 10Gi
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: flexvolsmb-drone-scratch
+spec:
+  capacity:
+    storage: 25Gi
+  accessModes:
+    - ReadWriteMany
+  storageClassName: flexvolsmb-drone-scratch
+  flexVolume:
+    driver: mount/smb
+    secretRef:
+      name: smb-secret
+    options:
+      opts: domain=bessems.eu,file_mode=0777,dir_mode=0777,iocharset=utf8
+      server: 192.168.11.225
+      share: /K3s.Volumes/drone/scratch
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: flexvolsmb-drone-scratch
+  namespace: default
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: flexvolsmb-drone-scratch
+  resources:
+    requests:
+      storage: 25Gi
 ---
 kind: Role
 apiVersion: rbac.authorization.k8s.io/v1

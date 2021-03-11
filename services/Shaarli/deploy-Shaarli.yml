@@ -13,9 +13,9 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: shaarli
   labels:
     app: shaarli
+  name: shaarli
 spec:
   replicas: 1
   selector:
@@ -23,15 +23,17 @@ spec:
       app: shaarli
   template:
     metadata:
+      annotations:
+        linkerd.io/inject: enabled
       labels:
         app: shaarli
     spec:
       containers:
-      - name: shaarli
-        image: bv11-cr01.bessems.eu/proxy/shaarli/shaarli
+      - image: bv11-cr01.bessems.eu/proxy/shaarli/shaarli
+        name: shaarli
         ports:
-          - name: web
-            containerPort: 80
+        - containerPort: 80
+          name: web
         volumeMounts:
         - mountPath: /var/www/shaarli/cache
           name: flexvolsmb-shaarli-cache
@@ -125,3 +127,4 @@ spec:
   resources:
     requests:
       storage: 1Gi
+---

@@ -30,7 +30,7 @@ spec:
     spec:
       containers:
       - name: sonarr
-        image: bv11-cr01.bessems.eu/proxy/linuxserver/sonarr:preview
+        image: bv11-cr01.bessems.eu/proxy/linuxserver/sonarr:latest
         imagePullPolicy: Always
         ports:
           - name: web
